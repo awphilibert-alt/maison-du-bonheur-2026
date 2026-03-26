@@ -515,12 +515,10 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
   );
 }
 
-function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, currentUser, meals, setMeals }) {
+function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, currentUser }) {
   const [selectedDay, setSelectedDay] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [np, setNp] = useState({ text: "", slot: "pm" });
-  const [editingMeal, setEditingMeal] = useState(null); // "lunch" | "dinner" | null
-  const [mealDraft, setMealDraft] = useState("");
   const adults = families.flatMap(f => f.members.filter(m => m.role === "adult").map(m => ({ ...m, familyColor: f.color })));
   const dayKey = DATES[selectedDay]?.key;
 
@@ -546,17 +544,6 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
   };
   const dayProps = proposals.filter(p => p.dayKey === dayKey);
   const slots = [{ key: "am", label: "Matin", icon: "🌅", color: "#FFD166" }, { key: "pm", label: "Après-midi", icon: "☀️", color: "#FF8C42" }, { key: "eve", label: "Soirée", icon: "🌙", color: "#A78BFA" }].filter(s => DEFAULT_PLANNING[selectedDay]?.[s.key]);
-
-  const dayMeals = meals[dayKey] || { lunch: "", dinner: "" };
-  const startEditMeal = (type) => { setEditingMeal(type); setMealDraft(dayMeals[type] || ""); };
-  const saveMeal = (type) => {
-    const next = { ...meals, [dayKey]: { ...dayMeals, [type]: mealDraft.trim() } };
-    setMeals(next); saveData("bonheur-meals", next); setEditingMeal(null);
-  };
-  const clearMeal = (type) => {
-    const next = { ...meals, [dayKey]: { ...dayMeals, [type]: "" } };
-    setMeals(next); saveData("bonheur-meals", next);
-  };
 
   const nameMap = {};
   families.forEach(f => f.members.forEach(m => { nameMap[m.id] = m.name; }));
@@ -608,41 +595,6 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
           );
         })}
 
-        {/* Repas du jour */}
-        <div style={{ marginTop: 20, padding: "18px 20px", borderRadius: 18, background: "rgba(107,191,107,0.05)", border: "1px solid rgba(107,191,107,0.15)" }}>
-          <h4 style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#6BBF6B", marginBottom: 14, textTransform: "uppercase", letterSpacing: 1 }}>🍽️ Menu du jour</h4>
-          {[{ key: "lunch", label: "Déjeuner", icon: "🥗" }, { key: "dinner", label: "Dîner", icon: "🌙" }].map(({ key, label, icon }) => (
-            <div key={key} style={{ marginBottom: 10 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <span style={{ fontSize: 16, width: 22, flexShrink: 0 }}>{icon}</span>
-                <span style={{ fontFamily: F, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1, minWidth: 62 }}>{label}</span>
-                {editingMeal === key ? (
-                  <div style={{ flex: 1, display: "flex", gap: 6 }}>
-                    <input
-                      autoFocus
-                      value={mealDraft}
-                      onChange={e => setMealDraft(e.target.value)}
-                      onKeyDown={e => { if (e.key === "Enter") saveMeal(key); if (e.key === "Escape") setEditingMeal(null); }}
-                      placeholder="Ex: Salade tomates, coquillettes jambon..."
-                      style={{ flex: 1, padding: "6px 12px", borderRadius: 10, border: "1px solid rgba(107,191,107,0.4)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 13, fontFamily: F, outline: "none" }}
-                    />
-                    <button onClick={() => saveMeal(key)} style={{ padding: "6px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: "#6BBF6B", color: "white", fontWeight: 700, fontSize: 12, fontFamily: F }}>✓</button>
-                    <button onClick={() => setEditingMeal(null)} style={{ padding: "6px 10px", borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontSize: 12, fontFamily: F }}>✕</button>
-                  </div>
-                ) : dayMeals[key] ? (
-                  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
-                    <span style={{ flex: 1, fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.85)" }}>{dayMeals[key]}</span>
-                    <button onClick={() => startEditMeal(key)} style={{ padding: "4px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: F }}>✏️</button>
-                    <button onClick={() => clearMeal(key)} style={{ padding: "4px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.1)", color: "#EF4444", fontSize: 11, fontFamily: F }}>✕</button>
-                  </div>
-                ) : (
-                  <button onClick={() => startEditMeal(key)} style={{ flex: 1, textAlign: "left", padding: "6px 14px", borderRadius: 10, border: "1px dashed rgba(107,191,107,0.25)", background: "transparent", color: "rgba(107,191,107,0.5)", cursor: "pointer", fontFamily: F, fontSize: 12 }}>+ Ajouter un repas…</button>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-
         {dayProps.length > 0 && (
           <div style={{ marginTop: 16 }}>
             <h4 style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>💡 Propositions</h4>
@@ -682,11 +634,14 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
   );
 }
 
-function CookingSection({ families, roomAssignments }) {
-  // Clé de réactivité : changements de familles OU d'affectations de chambre
+function CookingSection({ families, roomAssignments, meals, setMeals }) {
   const raKey = (roomAssignments || []).map(ra => `${ra.id}:${ra.checkIn}-${ra.checkOut}-${ra.memberIds.join(",")}`).join("|");
   const [pairs, setPairs] = useState(() => generateCookingPairs(families, roomAssignments));
   const [key, setKey] = useState(0);
+  // { dayKey, type: "lunch"|"dinner" } | null
+  const [editingMeal, setEditingMeal] = useState(null);
+  const [mealDraft, setMealDraft] = useState("");
+
   useEffect(() => {
     setPairs(generateCookingPairs(families, roomAssignments));
     setKey(k => k + 1);
@@ -694,47 +649,100 @@ function CookingSection({ families, roomAssignments }) {
 
   const regen = () => { setPairs(generateCookingPairs(families, roomAssignments)); setKey(k => k + 1); };
 
-  // Compteurs par personne pour l'affichage
+  const saveMeal = (dayKey, type) => {
+    const next = { ...meals, [dayKey]: { ...(meals[dayKey] || {}), [type]: mealDraft.trim() } };
+    setMeals(next); saveData("bonheur-meals", next); setEditingMeal(null);
+  };
+  const clearMeal = (dayKey, type) => {
+    const next = { ...meals, [dayKey]: { ...(meals[dayKey] || {}), [type]: "" } };
+    setMeals(next); saveData("bonheur-meals", next);
+  };
+  const startEdit = (dayKey, type) => {
+    setEditingMeal({ dayKey, type });
+    setMealDraft((meals[dayKey] || {})[type] || "");
+  };
+
+  // Compteurs par personne
   const mealCounts = {};
   pairs.forEach(pair => { if (pair) pair.forEach(p => { mealCounts[p.id] = (mealCounts[p.id] || 0) + 1; }); });
   const allAdults = families.flatMap(f => f.members.filter(m => m.role === "adult").map(m => ({ ...m, color: f.color })));
 
+  const mealMeta = [
+    { type: "lunch", label: "Déjeuner", icon: "🥗", color: "#FFD166" },
+    { type: "dinner", label: "Dîner",    icon: "🌙", color: "#A78BFA" },
+  ];
+
   return (
-    <div style={{ padding: "0 20px 40px", maxWidth: 920, margin: "0 auto" }}>
-      <SectionTitle icon="👨‍🍳" title="Planning Cuisine" subtitle="Binômes calculés selon les présences réelles — remélange si tu veux !" />
-      <div style={{ textAlign: "center", marginBottom: 20 }}>
-        <button onClick={regen} style={{ padding: "14px 32px", borderRadius: 40, border: "none", cursor: "pointer", background: "linear-gradient(135deg, #FFD166, #FF8C42)", color: "#0F141E", fontWeight: 700, fontSize: 15, fontFamily: F, boxShadow: "0 4px 24px rgba(255,140,66,0.3)" }}>🎲 Remélanger !</button>
+    <div style={{ padding: "0 20px 40px", maxWidth: 1100, margin: "0 auto" }}>
+      <SectionTitle icon="👨‍🍳" title="Planning Cuisine" subtitle="Binômes · menu · tout en un coup d'œil" />
+
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 20, marginBottom: 24, flexWrap: "wrap" }}>
+        <button onClick={regen} style={{ padding: "12px 28px", borderRadius: 40, border: "none", cursor: "pointer", background: "linear-gradient(135deg, #FFD166, #FF8C42)", color: "#0F141E", fontWeight: 700, fontSize: 14, fontFamily: F, boxShadow: "0 4px 20px rgba(255,140,66,0.3)" }}>🎲 Remélanger</button>
+        {allAdults.map(m => (
+          <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 20, background: `${m.color}15`, border: `1px solid ${m.color}30` }}>
+            <span style={{ fontSize: 15 }}>{m.avatar}</span>
+            <span style={{ fontFamily: F, fontSize: 11, color: m.color, fontWeight: 600 }}>{m.name}</span>
+            <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{mealCounts[m.id] || 0}×</span>
+          </div>
+        ))}
       </div>
 
-      {/* Récapitulatif par personne */}
-      {allAdults.length > 0 && (
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 24 }}>
-          {allAdults.map(m => (
-            <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 24, background: `${m.color}15`, border: `1px solid ${m.color}30` }}>
-              <span style={{ fontSize: 16 }}>{m.avatar}</span>
-              <span style={{ fontFamily: F, fontSize: 12, color: m.color, fontWeight: 600 }}>{m.name}</span>
-              <span style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{mealCounts[m.id] || 0} repas</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 14 }}>
         {DATES.map((d, di) => (
-          <div key={`${di}-${key}`} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 16, padding: 16, border: "1px solid rgba(255,255,255,0.06)" }}>
-            <div style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#FFD166", marginBottom: 10, textTransform: "capitalize" }}>{d.day} {d.num} juil.</div>
-            {["Déjeuner", "Dîner"].map((meal, mi) => {
+          <div key={`${di}-${key}`} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 20, border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden" }}>
+            {/* En-tête jour */}
+            <div style={{ padding: "12px 16px 10px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,200,60,0.04)" }}>
+              <span style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#FFD166", textTransform: "capitalize" }}>{d.day} {d.num} juillet</span>
+            </div>
+
+            {/* Blocs déjeuner + dîner */}
+            {mealMeta.map(({ type, label, icon, color }, mi) => {
               const pair = pairs[di * 2 + mi];
+              const dayKey = d.key;
+              const mealText = (meals[dayKey] || {})[type] || "";
+              const isEditing = editingMeal?.dayKey === dayKey && editingMeal?.type === type;
+
               return (
-                <div key={mi} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, padding: "6px 10px", borderRadius: 10, background: "rgba(255,255,255,0.03)" }}>
-                  <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)", width: 52, flexShrink: 0 }}>{meal}</span>
-                  {!pair ? (
-                    <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.15)", fontStyle: "italic" }}>—</span>
-                  ) : (
-                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                      {pair.map((p, pi) => (<span key={pi} style={{ fontFamily: F, fontSize: 11, padding: "3px 8px", borderRadius: 8, background: `${p.color}20`, color: p.color, fontWeight: 600 }}>{p.name} {p.avatar}</span>))}
-                    </div>
-                  )}
+                <div key={type} style={{ padding: "12px 14px", borderBottom: mi === 0 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
+                  {/* Ligne cuisine */}
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                    <span style={{ fontFamily: F, fontSize: 10, fontWeight: 700, color, textTransform: "uppercase", letterSpacing: 0.8, minWidth: 58 }}>{icon} {label}</span>
+                    {!pair ? (
+                      <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.15)", fontStyle: "italic" }}>—</span>
+                    ) : (
+                      <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                        {pair.map((p, pi) => (
+                          <span key={pi} style={{ fontFamily: F, fontSize: 11, padding: "2px 8px", borderRadius: 8, background: `${p.color}22`, color: p.color, fontWeight: 600 }}>{p.avatar} {p.name}</span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Ligne menu */}
+                  <div style={{ marginLeft: 0 }}>
+                    {isEditing ? (
+                      <div style={{ display: "flex", gap: 5 }}>
+                        <input
+                          autoFocus
+                          value={mealDraft}
+                          onChange={e => setMealDraft(e.target.value)}
+                          onKeyDown={e => { if (e.key === "Enter") saveMeal(dayKey, type); if (e.key === "Escape") setEditingMeal(null); }}
+                          placeholder="Ex: salade tomates, coquillettes jambon…"
+                          style={{ flex: 1, padding: "5px 10px", borderRadius: 9, border: `1px solid ${color}55`, background: "rgba(0,0,0,0.35)", color: "white", fontSize: 12, fontFamily: F, outline: "none" }}
+                        />
+                        <button onClick={() => saveMeal(dayKey, type)} style={{ padding: "5px 10px", borderRadius: 9, border: "none", cursor: "pointer", background: color, color: type === "lunch" ? "#0F141E" : "white", fontWeight: 700, fontSize: 12 }}>✓</button>
+                        <button onClick={() => setEditingMeal(null)} style={{ padding: "5px 8px", borderRadius: 9, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontSize: 12 }}>✕</button>
+                      </div>
+                    ) : mealText ? (
+                      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                        <span style={{ flex: 1, fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.7)", lineHeight: 1.4, fontStyle: "italic" }}>🍽 {mealText}</span>
+                        <button onClick={() => startEdit(dayKey, type)} style={{ padding: "3px 6px", borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.3)", fontSize: 10 }}>✏️</button>
+                        <button onClick={() => clearMeal(dayKey, type)} style={{ padding: "3px 6px", borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.08)", color: "rgba(239,68,68,0.5)", fontSize: 10 }}>✕</button>
+                      </div>
+                    ) : (
+                      <button onClick={() => startEdit(dayKey, type)} style={{ width: "100%", textAlign: "left", padding: "5px 10px", borderRadius: 9, border: `1px dashed ${color}25`, background: "transparent", color: `${color}55`, cursor: "pointer", fontFamily: F, fontSize: 11 }}>+ Ajouter le menu…</button>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -1245,8 +1253,8 @@ export default function App() {
       )}
       {active === "rooms" && <RoomsSection families={families} setFamilies={setFamilies} roomAssignments={roomAssignments} setRoomAssignments={setRoomAssignments} />}
       {active === "budget" && <BudgetSection families={families} totalCost={totalCost} setTotalCost={setTotalCost} roomAssignments={roomAssignments} />}
-      {active === "planning" && <PlanningSection families={families} rsvps={rsvps} setRsvps={setRsvps} proposals={proposals} setProposals={setProposals} currentUser={currentUser} meals={meals} setMeals={setMeals} />}
-      {active === "cooking" && <CookingSection families={families} roomAssignments={roomAssignments} />}
+      {active === "planning" && <PlanningSection families={families} rsvps={rsvps} setRsvps={setRsvps} proposals={proposals} setProposals={setProposals} currentUser={currentUser} />}
+      {active === "cooking" && <CookingSection families={families} roomAssignments={roomAssignments} meals={meals} setMeals={setMeals} />}
       {active === "activities" && <ActivitiesSection />}
       {active === "courses" && <ShoppingSection meals={meals} shoppingItems={shoppingItems} setShoppingItems={setShoppingItems} currentUser={currentUser} families={families} />}
       {active === "profiles" && <ProfilesSection families={families} setFamilies={setFamilies} currentUser={currentUser} setCurrentUser={setCurrentUser} roomAssignments={roomAssignments} />}
