@@ -160,6 +160,57 @@ function computeShares(families, totalCost, roomAssignments) {
   });
 }
 
+// Compress image to base64 thumbnail (~300px, 0.55 quality)
+async function compressImage(file) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX = 320;
+        const ratio = Math.min(MAX / img.width, MAX / img.height, 1);
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * ratio);
+        canvas.height = Math.round(img.height * ratio);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        resolve(canvas.toDataURL("image/jpeg", 0.55));
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// Tricount-style debt calculation
+// Returns { balances: { [memberId]: number }, transactions: [{ from, to, amount }] }
+function calculateDebts(expenses, allMembers) {
+  const balances = {};
+  allMembers.forEach(m => { balances[m.id] = 0; });
+
+  expenses.forEach(exp => {
+    if (!exp.participantIds || exp.participantIds.length === 0) return;
+    const share = exp.amount / exp.participantIds.length;
+    balances[exp.paidById] = (balances[exp.paidById] || 0) + exp.amount;
+    exp.participantIds.forEach(pid => {
+      balances[pid] = (balances[pid] || 0) - share;
+    });
+  });
+
+  // Greedy debt simplification — minimal number of transfers
+  const d = Object.entries(balances).filter(([, b]) => b < -0.01).map(([id, b]) => ({ id, amount: Math.abs(b) })).sort((a, b) => b.amount - a.amount);
+  const c = Object.entries(balances).filter(([, b]) => b > 0.01).map(([id, b]) => ({ id, amount: b })).sort((a, b) => b.amount - a.amount);
+  const transactions = [];
+  let di = 0, ci = 0;
+  while (di < d.length && ci < c.length) {
+    const amt = Math.min(d[di].amount, c[ci].amount);
+    if (amt > 0.01) transactions.push({ from: d[di].id, to: c[ci].id, amount: Math.round(amt * 100) / 100 });
+    d[di].amount -= amt; c[ci].amount -= amt;
+    if (d[di].amount < 0.01) di++;
+    if (c[ci].amount < 0.01) ci++;
+  }
+  return { balances, transactions };
+}
+
 async function loadData(key, fallback) {
   try {
     const val = localStorage.getItem(key);
@@ -262,6 +313,7 @@ function Nav({ active, setActive }) {
     { id: "cooking", icon: "👨‍🍳", label: "Cuisine" },
     { id: "activities", icon: "🎯", label: "Activités" },
     { id: "courses", icon: "🛒", label: "Courses" },
+    { id: "expenses", icon: "💸", label: "Dépenses" },
     { id: "profiles", icon: "👥", label: "Profils" },
     { id: "rules", icon: "📜", label: "Règles d'or" },
   ];
@@ -1092,6 +1144,348 @@ function ShoppingSection({ meals, shoppingItems, setShoppingItems, currentUser, 
   );
 }
 
+const EXPENSE_CATS = [
+  { id: "courses", label: "Courses", icon: "🛒" },
+  { id: "alcool", label: "Alcool", icon: "🍷" },
+  { id: "restaurant", label: "Restaurant", icon: "🍽️" },
+  { id: "activite", label: "Activité", icon: "🎯" },
+  { id: "hygiene", label: "Hygiène", icon: "🧴" },
+  { id: "autre", label: "Autre", icon: "💡" },
+];
+const BLANK_EXP = { description: "", amount: "", paidById: "", date: "2026-07-11", participantIds: [], category: "courses", receiptThumb: null };
+
+function ExpensesSection({ families, roomAssignments, expenses, setExpenses, currentUser }) {
+  const [view, setView] = useState("list");
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState(BLANK_EXP);
+  const [receiptPreview, setReceiptPreview] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
+
+  const inp = { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 13, fontFamily: F, outline: "none", boxSizing: "border-box" };
+  const lbl = { fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 5 };
+
+  // Flat member list
+  const allMembers = families.flatMap(f => f.members.map(m => ({ ...m, familyName: f.name, familyColor: f.color, familyEmoji: f.emoji })));
+  const adults = allMembers.filter(m => m.role === "adult");
+  const memberMap = Object.fromEntries(allMembers.map(m => [m.id, m]));
+
+  const catMap = Object.fromEntries(EXPENSE_CATS.map(c => [c.id, c]));
+
+  // Who is present on a given date (checkIn <= date < checkOut)
+  const getPresentIds = (dateKey) => {
+    const ids = new Set();
+    (roomAssignments || []).forEach(ra => {
+      if (ra.checkIn <= dateKey && dateKey < ra.checkOut) ra.memberIds.forEach(id => ids.add(id));
+    });
+    return [...ids];
+  };
+
+  const openForm = () => {
+    const presentIds = getPresentIds("2026-07-11");
+    const defaultPayer = currentUser || (adults[0]?.id || "");
+    setForm({ ...BLANK_EXP, paidById: defaultPayer, participantIds: presentIds });
+    setReceiptPreview(null);
+    setShowForm(true);
+  };
+
+  const handleDateChange = (date) => {
+    setForm(f => ({ ...f, date, participantIds: getPresentIds(date) }));
+  };
+
+  const toggleParticipant = (mid) => {
+    setForm(f => ({ ...f, participantIds: f.participantIds.includes(mid) ? f.participantIds.filter(id => id !== mid) : [...f.participantIds, mid] }));
+  };
+
+  const handleReceipt = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const thumb = await compressImage(file);
+    setReceiptPreview(thumb);
+    setForm(f => ({ ...f, receiptThumb: thumb }));
+  };
+
+  const canAdd = form.description.trim() && form.amount > 0 && form.paidById && form.participantIds.length > 0;
+
+  const addExpense = () => {
+    if (!canAdd) return;
+    const next = [...expenses, { id: `exp-${Date.now()}`, description: form.description.trim(), amount: parseFloat(form.amount), paidById: form.paidById, date: form.date, participantIds: form.participantIds, category: form.category, receiptThumb: form.receiptThumb, createdAt: Date.now() }];
+    setExpenses(next); saveData("bonheur-expenses", next);
+    setShowForm(false); setForm(BLANK_EXP); setReceiptPreview(null);
+  };
+
+  const deleteExpense = (id) => {
+    const next = expenses.filter(e => e.id !== id);
+    setExpenses(next); saveData("bonheur-expenses", next);
+  };
+
+  // Sort by date descending
+  const sorted = [...expenses].sort((a, b) => b.date.localeCompare(a.date) || b.createdAt - a.createdAt);
+  const totalSpent = expenses.reduce((s, e) => s + e.amount, 0);
+
+  const { balances, transactions } = calculateDebts(expenses, allMembers);
+
+  const fmtEur = (n) => n.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " €";
+  const fmtDate = (d) => new Date(d + "T12:00:00").toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" });
+
+  return (
+    <div style={{ padding: "0 20px 60px", maxWidth: 920, margin: "0 auto" }}>
+      <SectionTitle icon="💸" title="Dépenses" subtitle="Tricount maison — qui a payé quoi, qui doit quoi à qui" />
+
+      {/* Sub-tabs */}
+      <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 28 }}>
+        {[["list", "📋 Dépenses"], ["settlement", "⚖️ Règlement"]].map(([id, label]) => (
+          <button key={id} onClick={() => setView(id)} style={{ padding: "10px 24px", borderRadius: 30, border: "none", cursor: "pointer", background: view === id ? "linear-gradient(135deg,#FFD166,#FF8C42)" : "rgba(255,255,255,0.05)", color: view === id ? "#0F141E" : "rgba(255,255,255,0.5)", fontWeight: 700, fontSize: 13, fontFamily: F }}>{label}</button>
+        ))}
+      </div>
+
+      {/* === VIEW: LIST === */}
+      {view === "list" && (
+        <>
+          {/* Stats bar */}
+          {expenses.length > 0 && (
+            <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
+              <div style={{ padding: "14px 20px", borderRadius: 16, background: "rgba(255,200,60,0.08)", border: "1px solid rgba(255,200,60,0.15)", flex: 1 }}>
+                <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>Total dépensé</div>
+                <div style={{ fontFamily: PF, fontSize: 28, fontWeight: 900, color: "#FFD166" }}>{fmtEur(totalSpent)}</div>
+              </div>
+              <div style={{ padding: "14px 20px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", flex: 1 }}>
+                <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>{expenses.length} dépense{expenses.length > 1 ? "s" : ""}</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
+                  {EXPENSE_CATS.filter(cat => expenses.some(e => e.category === cat.id)).map(cat => (
+                    <span key={cat.id} style={{ fontFamily: F, fontSize: 11, padding: "2px 8px", borderRadius: 8, background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.5)" }}>{cat.icon} {cat.label}</span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Add button */}
+          {!showForm && (
+            <div style={{ textAlign: "center", marginBottom: 24 }}>
+              <button onClick={openForm} style={{ padding: "13px 32px", borderRadius: 30, border: "none", cursor: "pointer", background: "linear-gradient(135deg,#FFD166,#FF8C42)", color: "#0F141E", fontWeight: 700, fontSize: 14, fontFamily: F }}>➕ Ajouter une dépense</button>
+            </div>
+          )}
+
+          {/* Add form */}
+          {showForm && (
+            <div style={{ padding: 24, borderRadius: 20, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", marginBottom: 24 }}>
+              <h3 style={{ fontFamily: PF, fontSize: 18, color: "#FFD166", margin: "0 0 20px" }}>➕ Nouvelle dépense</h3>
+
+              {/* Description + Montant */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 10, marginBottom: 14 }}>
+                <div>
+                  <label style={lbl}>Description *</label>
+                  <input value={form.description} onChange={e => setForm(f => ({ ...f, description: e.target.value }))} placeholder="Ex: Courses Lidl, Bouteilles rosé…" style={inp} />
+                </div>
+                <div>
+                  <label style={lbl}>Montant (€) *</label>
+                  <input type="number" min="0" step="0.01" value={form.amount} onChange={e => setForm(f => ({ ...f, amount: e.target.value }))} placeholder="0,00" style={{ ...inp, width: 110, textAlign: "right" }} />
+                </div>
+              </div>
+
+              {/* Payé par + Date */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+                <div>
+                  <label style={lbl}>Payé par *</label>
+                  <select value={form.paidById} onChange={e => setForm(f => ({ ...f, paidById: e.target.value }))} style={{ ...inp, cursor: "pointer" }}>
+                    <option value="">— Choisir —</option>
+                    {adults.map(m => <option key={m.id} value={m.id}>{m.avatar} {m.name}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={lbl}>Date</label>
+                  <input type="date" value={form.date} min="2026-07-11" max="2026-07-25" onChange={e => handleDateChange(e.target.value)} style={inp} />
+                </div>
+              </div>
+
+              {/* Catégorie */}
+              <div style={{ marginBottom: 14 }}>
+                <label style={lbl}>Catégorie</label>
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                  {EXPENSE_CATS.map(cat => (
+                    <button key={cat.id} onClick={() => setForm(f => ({ ...f, category: cat.id }))} style={{ padding: "6px 12px", borderRadius: 20, border: "none", cursor: "pointer", background: form.category === cat.id ? "rgba(255,200,60,0.2)" : "rgba(255,255,255,0.05)", color: form.category === cat.id ? "#FFD166" : "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 12, fontWeight: form.category === cat.id ? 700 : 400 }}>{cat.icon} {cat.label}</button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Participants */}
+              <div style={{ marginBottom: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                  <label style={{ ...lbl, margin: 0 }}>Concernés par la dépense * <span style={{ color: "rgba(255,255,255,0.25)" }}>({form.participantIds.length} sélectionné{form.participantIds.length > 1 ? "s" : ""})</span></label>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={() => setForm(f => ({ ...f, participantIds: allMembers.map(m => m.id) }))} style={{ padding: "3px 10px", borderRadius: 14, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 11 }}>Tous</button>
+                    <button onClick={() => setForm(f => ({ ...f, participantIds: [] }))} style={{ padding: "3px 10px", borderRadius: 14, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 11 }}>Aucun</button>
+                  </div>
+                </div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {allMembers.map(m => {
+                    const sel = form.participantIds.includes(m.id);
+                    return (
+                      <button key={m.id} onClick={() => toggleParticipant(m.id)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 20, border: sel ? `1px solid ${m.familyColor}55` : "1px solid rgba(255,255,255,0.08)", cursor: "pointer", background: sel ? `${m.familyColor}22` : "rgba(255,255,255,0.03)", color: sel ? m.familyColor : "rgba(255,255,255,0.35)", fontFamily: F, fontSize: 12, fontWeight: sel ? 600 : 400 }}>
+                        <span>{m.avatar}</span>
+                        <span>{m.name}</span>
+                        {m.role === "child" && m.age != null && <span style={{ fontSize: 10, opacity: 0.6 }}>{m.age}a</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+                {form.participantIds.length > 0 && form.amount > 0 && (
+                  <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 8 }}>
+                    → {(parseFloat(form.amount) / form.participantIds.length).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € par personne
+                  </div>
+                )}
+              </div>
+
+              {/* Ticket de caisse */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={lbl}>Ticket de caisse <span style={{ color: "rgba(255,255,255,0.2)" }}>(optionnel)</span></label>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <label style={{ padding: "8px 16px", borderRadius: 10, border: "1px dashed rgba(255,255,255,0.15)", cursor: "pointer", fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.02)" }}>
+                    📷 Choisir une photo
+                    <input type="file" accept="image/*" onChange={handleReceipt} style={{ display: "none" }} />
+                  </label>
+                  {receiptPreview && <img src={receiptPreview} alt="ticket" style={{ height: 60, width: 60, objectFit: "cover", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)" }} />}
+                  {receiptPreview && <button onClick={() => { setReceiptPreview(null); setForm(f => ({ ...f, receiptThumb: null })); }} style={{ padding: "4px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.1)", color: "#EF4444", fontSize: 11 }}>✕</button>}
+                </div>
+              </div>
+
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={addExpense} disabled={!canAdd} style={{ padding: "11px 26px", borderRadius: 13, border: "none", cursor: canAdd ? "pointer" : "default", background: canAdd ? "linear-gradient(135deg,#FFD166,#FF8C42)" : "rgba(255,255,255,0.08)", color: canAdd ? "#0F141E" : "rgba(255,255,255,0.3)", fontWeight: 700, fontSize: 13, fontFamily: F }}>✓ Ajouter</button>
+                <button onClick={() => { setShowForm(false); setForm(BLANK_EXP); setReceiptPreview(null); }} style={{ padding: "11px 18px", borderRadius: 13, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
+              </div>
+            </div>
+          )}
+
+          {/* Expense list */}
+          {sorted.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 48, color: "rgba(255,255,255,0.25)", fontFamily: F }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>💸</div>
+              <div>Personne n'a encore rien payé. Ça ne va pas durer.</div>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {sorted.map(exp => {
+                const payer = memberMap[exp.paidById];
+                const cat = catMap[exp.category] || catMap.autre;
+                const sharePerPerson = exp.participantIds.length > 0 ? exp.amount / exp.participantIds.length : 0;
+                const isExpanded = expandedId === exp.id;
+                return (
+                  <div key={exp.id} style={{ borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", overflow: "hidden" }}>
+                    <div onClick={() => setExpandedId(isExpanded ? null : exp.id)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", cursor: "pointer" }}>
+                      <span style={{ fontSize: 22, flexShrink: 0 }}>{cat.icon}</span>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontFamily: F, fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.85)", marginBottom: 3 }}>{exp.description}</div>
+                        <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)" }}>
+                          {fmtDate(exp.date)} · {payer ? `${payer.avatar} ${payer.name}` : "?"} a payé · {exp.participantIds.length} personne{exp.participantIds.length > 1 ? "s" : ""}
+                        </div>
+                      </div>
+                      <div style={{ textAlign: "right", flexShrink: 0 }}>
+                        <div style={{ fontFamily: PF, fontSize: 20, fontWeight: 800, color: "#FFD166" }}>{fmtEur(exp.amount)}</div>
+                        <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{fmtEur(sharePerPerson)}/pers.</div>
+                      </div>
+                      <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 12, marginLeft: 4 }}>{isExpanded ? "▲" : "▼"}</span>
+                    </div>
+                    {isExpanded && (
+                      <div style={{ padding: "0 16px 14px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                        <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 8, marginTop: 10 }}>Concernés :</div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 12 }}>
+                          {exp.participantIds.map(pid => {
+                            const m = memberMap[pid];
+                            if (!m) return null;
+                            return <span key={pid} style={{ fontFamily: F, fontSize: 11, padding: "3px 9px", borderRadius: 10, background: `${m.familyColor}20`, color: m.familyColor, fontWeight: 500 }}>{m.avatar} {m.name}</span>;
+                          })}
+                        </div>
+                        {exp.receiptThumb && (
+                          <div style={{ marginBottom: 12 }}>
+                            <img src={exp.receiptThumb} alt="ticket" style={{ height: 80, borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", objectFit: "cover" }} />
+                          </div>
+                        )}
+                        <button onClick={() => deleteExpense(exp.id)} style={{ padding: "6px 14px", borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.1)", color: "#EF4444", fontFamily: F, fontSize: 12, fontWeight: 600 }}>🗑 Supprimer</button>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      {/* === VIEW: SETTLEMENT === */}
+      {view === "settlement" && (
+        <>
+          {expenses.length === 0 ? (
+            <div style={{ textAlign: "center", padding: 48, color: "rgba(255,255,255,0.25)", fontFamily: F }}>
+              <div style={{ fontSize: 48, marginBottom: 12 }}>⚖️</div>
+              <div>Aucune dépense enregistrée pour l'instant.</div>
+            </div>
+          ) : (
+            <>
+              {/* Balance per person */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: 12, marginBottom: 28 }}>
+                {allMembers.filter(m => balances[m.id] !== undefined).map(m => {
+                  const bal = balances[m.id] || 0;
+                  const isPos = bal > 0.01, isNeg = bal < -0.01;
+                  const color = isPos ? "#6BBF6B" : isNeg ? "#EF4444" : "rgba(255,255,255,0.4)";
+                  return (
+                    <div key={m.id} style={{ padding: "16px 18px", borderRadius: 16, background: isPos ? "rgba(107,191,107,0.06)" : isNeg ? "rgba(239,68,68,0.06)" : "rgba(255,255,255,0.03)", border: `1px solid ${isPos ? "rgba(107,191,107,0.2)" : isNeg ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.06)"}` }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                        <span style={{ fontSize: 26 }}>{m.avatar}</span>
+                        <div>
+                          <div style={{ fontFamily: F, fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>{m.name}</div>
+                          <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{m.familyName}</div>
+                        </div>
+                      </div>
+                      <div style={{ fontFamily: PF, fontSize: 22, fontWeight: 800, color }}>
+                        {isPos ? "+" : ""}{bal.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
+                      </div>
+                      <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
+                        {isPos ? "doit recevoir" : isNeg ? "doit payer" : "équilibré ✓"}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Transactions */}
+              {transactions.length === 0 ? (
+                <div style={{ textAlign: "center", padding: 32, borderRadius: 16, background: "rgba(107,191,107,0.06)", border: "1px solid rgba(107,191,107,0.15)", fontFamily: F, fontSize: 14, color: "#6BBF6B" }}>✓ Tout le monde est à l'équilibre !</div>
+              ) : (
+                <div>
+                  <h3 style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>💸 Virements à faire</h3>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    {transactions.map((t, i) => {
+                      const from = memberMap[t.from], to = memberMap[t.to];
+                      if (!from || !to) return null;
+                      return (
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                          <span style={{ fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontSize: 22 }}>{from.avatar}</span>
+                            <span style={{ fontWeight: 600, color: "#EF4444" }}>{from.name}</span>
+                          </span>
+                          <span style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>→</span>
+                          <div style={{ flex: 1, textAlign: "center" }}>
+                            <div style={{ fontFamily: PF, fontSize: 22, fontWeight: 900, color: "#FFD166" }}>{fmtEur(t.amount)}</div>
+                          </div>
+                          <span style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>→</span>
+                          <span style={{ fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", gap: 6 }}>
+                            <span style={{ fontWeight: 600, color: "#6BBF6B" }}>{to.name}</span>
+                            <span style={{ fontSize: 22 }}>{to.avatar}</span>
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 function RulesSection() {
   const rules = [
     { icon: "🤝", title: "Vivre ensemble", text: "On partage tout : cuisine, ménage, bonne humeur. Pas de passager clandestin du frigo." },
@@ -1189,6 +1583,7 @@ export default function App() {
   const [proposals, setProposals] = useState([]);
   const [meals, setMeals] = useState({});
   const [shoppingItems, setShoppingItems] = useState([]);
+  const [expenses, setExpenses] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -1203,6 +1598,7 @@ export default function App() {
       setProposals(await loadData("bonheur-proposals", []));
       setMeals(await loadData("bonheur-meals", {}));
       setShoppingItems(await loadData("bonheur-shopping", []));
+      setExpenses(await loadData("bonheur-expenses", []));
       const u = await loadData("bonheur-currentUser", null); if (u) setCurrentUser(u);
       setLoaded(true);
     })();
@@ -1257,6 +1653,7 @@ export default function App() {
       {active === "cooking" && <CookingSection families={families} roomAssignments={roomAssignments} meals={meals} setMeals={setMeals} />}
       {active === "activities" && <ActivitiesSection />}
       {active === "courses" && <ShoppingSection meals={meals} shoppingItems={shoppingItems} setShoppingItems={setShoppingItems} currentUser={currentUser} families={families} />}
+      {active === "expenses" && <ExpensesSection families={families} roomAssignments={roomAssignments} expenses={expenses} setExpenses={setExpenses} currentUser={currentUser} />}
       {active === "profiles" && <ProfilesSection families={families} setFamilies={setFamilies} currentUser={currentUser} setCurrentUser={setCurrentUser} roomAssignments={roomAssignments} />}
       {active === "rules" && <RulesSection />}
       <footer style={{ padding: "40px 20px", textAlign: "center", background: "rgba(0,0,0,0.3)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
