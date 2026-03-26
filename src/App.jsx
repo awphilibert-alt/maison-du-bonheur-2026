@@ -318,7 +318,7 @@ function Nav({ active, setActive }) {
     { id: "rules", icon: "📜", label: "Règles d'or" },
   ];
   return (
-    <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(15,20,30,0.92)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,0.11)", display: "flex", overflowX: "auto", fontFamily: F }}>
+    <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(15,20,30,0.92)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,0.13)", display: "flex", overflowX: "auto", fontFamily: F }}>
       {tabs.map(t => (
         <button key={t.id} onClick={() => setActive(t.id)} style={{
           flex: "1 0 auto", padding: "14px 16px", border: "none", cursor: "pointer",
@@ -459,10 +459,10 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
           const isFree = assignments.length === 0;
           const isOpen = assigningRoom === r.name;
           return (
-            <div key={r.name} style={{ background: isFree ? "linear-gradient(135deg,rgba(45,106,79,0.15),rgba(45,106,79,0.05))" : "rgba(255,255,255,0.07)", border: `1px solid ${isFree ? "rgba(45,106,79,0.3)" : "rgba(255,255,255,0.07)"}`, borderRadius: 20, padding: 20 }}>
+            <div key={r.name} style={{ background: isFree ? "linear-gradient(135deg,rgba(45,106,79,0.15),rgba(45,106,79,0.05))" : "rgba(255,255,255,0.03)", border: `1px solid ${isFree ? "rgba(45,106,79,0.3)" : "rgba(255,255,255,0.03)"}`, borderRadius: 20, padding: 20 }}>
               {/* En-tête chambre */}
               <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
-                <div style={{ width: 42, height: 42, borderRadius: 13, background: assignments[0] ? `${families.find(f=>f.id===assignments[0].familyId)?.color}22`:"rgba(255,255,255,0.11)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21 }}>{r.icon}</div>
+                <div style={{ width: 42, height: 42, borderRadius: 13, background: assignments[0] ? `${families.find(f=>f.id===assignments[0].familyId)?.color}22`:"rgba(255,255,255,0.13)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21 }}>{r.icon}</div>
                 <div style={{ flex: 1 }}>
                   <h3 style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "white", margin: 0 }}>{r.name}</h3>
                   <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{r.level}</span>
@@ -500,7 +500,7 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
                             </div>
                             <div style={{ display: "flex", gap: 6 }}>
                               <button onClick={() => saveDates(ra.id)} style={{ padding: "5px 12px", borderRadius: 8, border: "none", cursor: "pointer", background: fam.color, color: "white", fontWeight: 700, fontSize: 11, fontFamily: F }}>✓ OK</button>
-                              <button onClick={() => setEditingRA(null)} style={{ padding: "5px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.11)", color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: F }}>✕</button>
+                              <button onClick={() => setEditingRA(null)} style={{ padding: "5px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: F }}>✕</button>
                             </div>
                           </div>
                         ) : (
@@ -535,7 +535,7 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
                         const isYoung = m.role === "child" && (m.age == null || m.age < 6);
                         const checked = assignForm.memberIds.includes(m.id);
                         return (
-                          <label key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "7px 10px", borderRadius: 9, marginBottom: 4, background: checked ? `${selectedFamily.color}20` : "rgba(255,255,255,0.07)", border: `1px solid ${checked ? selectedFamily.color+"40" : "rgba(255,255,255,0.11)"}` }}>
+                          <label key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "7px 10px", borderRadius: 9, marginBottom: 4, background: checked ? `${selectedFamily.color}20` : "rgba(255,255,255,0.03)", border: `1px solid ${checked ? selectedFamily.color+"40" : "rgba(255,255,255,0.13)"}` }}>
                             <input type="checkbox" checked={checked} onChange={() => toggleMember(m.id)} style={{ accentColor: selectedFamily.color }} />
                             <span style={{ fontFamily: F, fontSize: 12, color: "white", flex: 1 }}>{m.avatar} {m.name}</span>
                             <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>
@@ -553,7 +553,7 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
                   {assignError && <div style={{ fontFamily: F, fontSize: 11, color: "#EF4444", marginBottom: 8 }}>⚠️ {assignError}</div>}
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={submitAssignment} disabled={!assignForm.familyId || assignForm.memberIds.length === 0} style={{ padding: "8px 16px", borderRadius: 10, border: "none", cursor: assignForm.familyId && assignForm.memberIds.length > 0 ? "pointer" : "default", background: assignForm.familyId && assignForm.memberIds.length > 0 ? "linear-gradient(135deg,#FFD166,#FF8C42)" : "rgba(255,255,255,0.08)", color: assignForm.familyId && assignForm.memberIds.length > 0 ? "#0F141E" : "rgba(255,255,255,0.3)", fontWeight: 700, fontSize: 12, fontFamily: F }}>✓ Affecter</button>
-                    <button onClick={() => setAssigningRoom(null)} style={{ padding: "8px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.11)", color: "rgba(255,255,255,0.4)", fontSize: 12, fontFamily: F }}>Annuler</button>
+                    <button onClick={() => setAssigningRoom(null)} style={{ padding: "8px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontSize: 12, fontFamily: F }}>Annuler</button>
                   </div>
                 </div>
               )}
@@ -611,7 +611,7 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
           </button>
         ))}
       </div>
-      <div style={{ background: "rgba(255,255,255,0.07)", borderRadius: 24, padding: 28, border: "1px solid rgba(255,255,255,0.11)" }}>
+      <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 24, padding: 28, border: "1px solid rgba(255,255,255,0.13)" }}>
         <h3 style={{ fontFamily: PF, fontSize: 22, color: "#FFD166", margin: "0 0 4px" }}>Jour {selectedDay + 1}</h3>
         <p style={{ fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.35)", margin: "0 0 24px", textTransform: "capitalize" }}>{DATES[selectedDay].full}</p>
         {slots.map(s => {
@@ -637,7 +637,7 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
                       <span style={{ fontSize: 14 }}>{m.avatar}</span>
                       <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.5)", marginRight: 2, minWidth: 44 }}>{m.name.split("-")[0]}</span>
                       {[["yes", "✓", "#2D6A4F"], ["no", "✗", "#991B1B"], ["maybe", "?", "#92400E"]].map(([v, l, bg]) => (
-                        <button key={v} onClick={() => toggleRsvp(m.id, s.key, v)} style={{ width: 24, height: 24, borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, background: st === v ? bg : "rgba(255,255,255,0.11)", color: st === v ? "white" : "rgba(255,255,255,0.3)" }}>{l}</button>
+                        <button key={v} onClick={() => toggleRsvp(m.id, s.key, v)} style={{ width: 24, height: 24, borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, background: st === v ? bg : "rgba(255,255,255,0.13)", color: st === v ? "white" : "rgba(255,255,255,0.3)" }}>{l}</button>
                       ))}
                     </div>
                   );
@@ -651,14 +651,14 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
           <div style={{ marginTop: 16 }}>
             <h4 style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>💡 Propositions</h4>
             {dayProps.map(p => (
-              <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.11)", marginBottom: 8 }}>
+              <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.13)", marginBottom: 8 }}>
                 <div style={{ flex: 1 }}>
                   <span style={{ fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.8)" }}>{p.text}</span>
                   <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
                     par {nameMap[p.author] || p.author} &bull; {p.slot === "am" ? "matin" : p.slot === "pm" ? "aprem" : "soirée"}
                   </div>
                 </div>
-                <button onClick={() => voteProp(p.id)} style={{ padding: "6px 14px", borderRadius: 20, border: "none", cursor: "pointer", background: p.votes.includes(currentUser) ? "rgba(107,191,107,0.2)" : "rgba(255,255,255,0.11)", color: p.votes.includes(currentUser) ? "#6BBF6B" : "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 12, fontWeight: 600 }}>👍 {p.votes.length}</button>
+                <button onClick={() => voteProp(p.id)} style={{ padding: "6px 14px", borderRadius: 20, border: "none", cursor: "pointer", background: p.votes.includes(currentUser) ? "rgba(107,191,107,0.2)" : "rgba(255,255,255,0.13)", color: p.votes.includes(currentUser) ? "#6BBF6B" : "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 12, fontWeight: 600 }}>👍 {p.votes.length}</button>
               </div>
             ))}
           </div>
@@ -668,14 +668,14 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
           <div style={{ marginTop: 16, padding: "16px 18px", borderRadius: 16, background: "rgba(255,200,60,0.06)", border: "1px solid rgba(255,200,60,0.15)" }}>
             <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
               {[["am", "Matin"], ["pm", "Aprem"], ["eve", "Soirée"]].map(([k, l]) => (
-                <button key={k} onClick={() => setNp(p => ({ ...p, slot: k }))} style={{ padding: "6px 14px", borderRadius: 20, border: "none", cursor: "pointer", background: np.slot === k ? "#FFD166" : "rgba(255,255,255,0.11)", color: np.slot === k ? "#0F141E" : "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 12, fontWeight: 600 }}>{l}</button>
+                <button key={k} onClick={() => setNp(p => ({ ...p, slot: k }))} style={{ padding: "6px 14px", borderRadius: 20, border: "none", cursor: "pointer", background: np.slot === k ? "#FFD166" : "rgba(255,255,255,0.13)", color: np.slot === k ? "#0F141E" : "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 12, fontWeight: 600 }}>{l}</button>
               ))}
             </div>
             <input value={np.text} onChange={e => setNp(p => ({ ...p, text: e.target.value }))} placeholder="Ex: Journée kayak sur la Dronne..." onKeyDown={e => e.key === "Enter" && addProp()}
               style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 14, fontFamily: F, outline: "none", marginBottom: 10, boxSizing: "border-box" }} />
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={addProp} style={{ padding: "10px 24px", borderRadius: 12, border: "none", cursor: "pointer", background: "#FFD166", color: "#0F141E", fontWeight: 700, fontSize: 13, fontFamily: F }}>Proposer</button>
-              <button onClick={() => setShowForm(false)} style={{ padding: "10px 24px", borderRadius: 12, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.11)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
+              <button onClick={() => setShowForm(false)} style={{ padding: "10px 24px", borderRadius: 12, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
             </div>
           </div>
         ) : (
@@ -741,9 +741,9 @@ function CookingSection({ families, roomAssignments, meals, setMeals }) {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 14 }}>
         {DATES.map((d, di) => (
-          <div key={`${di}-${key}`} style={{ background: "rgba(255,255,255,0.07)", borderRadius: 20, border: "1px solid rgba(255,255,255,0.07)", overflow: "hidden" }}>
+          <div key={`${di}-${key}`} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 20, border: "1px solid rgba(255,255,255,0.03)", overflow: "hidden" }}>
             {/* En-tête jour */}
-            <div style={{ padding: "12px 16px 10px", borderBottom: "1px solid rgba(255,255,255,0.11)", background: "rgba(255,200,60,0.04)" }}>
+            <div style={{ padding: "12px 16px 10px", borderBottom: "1px solid rgba(255,255,255,0.13)", background: "rgba(255,200,60,0.04)" }}>
               <span style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#FFD166", textTransform: "capitalize" }}>{d.day} {d.num} juillet</span>
             </div>
 
@@ -783,7 +783,7 @@ function CookingSection({ families, roomAssignments, meals, setMeals }) {
                           style={{ flex: 1, padding: "5px 10px", borderRadius: 9, border: `1px solid ${color}55`, background: "rgba(0,0,0,0.35)", color: "white", fontSize: 12, fontFamily: F, outline: "none" }}
                         />
                         <button onClick={() => saveMeal(dayKey, type)} style={{ padding: "5px 10px", borderRadius: 9, border: "none", cursor: "pointer", background: color, color: type === "lunch" ? "#0F141E" : "white", fontWeight: 700, fontSize: 12 }}>✓</button>
-                        <button onClick={() => setEditingMeal(null)} style={{ padding: "5px 8px", borderRadius: 9, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.11)", color: "rgba(255,255,255,0.4)", fontSize: 12 }}>✕</button>
+                        <button onClick={() => setEditingMeal(null)} style={{ padding: "5px 8px", borderRadius: 9, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontSize: 12 }}>✕</button>
                       </div>
                     ) : mealText ? (
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -817,7 +817,7 @@ function ActivitiesSection() {
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
         {filtered.map((a, i) => (
-          <div key={i} style={{ display: "flex", gap: 14, padding: "16px 18px", borderRadius: 16, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.11)" }}>
+          <div key={i} style={{ display: "flex", gap: 14, padding: "16px 18px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.13)" }}>
             <span style={{ fontSize: 32, lineHeight: 1 }}>{a.icon}</span>
             <div>
               <h4 style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "white", margin: "0 0 4px" }}>{a.name}</h4>
@@ -908,7 +908,7 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(320px, 1fr))", gap: 20 }}>
         {families.map(fam => (
-          <div key={fam.id} style={{ background: "rgba(255,255,255,0.07)", borderRadius: 24, overflow: "hidden", border: `1px solid ${fam.color}33` }}>
+          <div key={fam.id} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 24, overflow: "hidden", border: `1px solid ${fam.color}33` }}>
             <div style={{ background: `linear-gradient(135deg, ${fam.color}25, ${fam.color}08)`, padding: "20px 24px", display: "flex", alignItems: "center", gap: 14, borderBottom: `1px solid ${fam.color}22` }}>
               <span style={{ fontSize: 40 }}>{fam.emoji}</span>
               <div><h3 style={{ fontFamily: PF, fontSize: 22, fontWeight: 800, color: fam.color, margin: 0 }}>{fam.name}</h3><p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "2px 0 0" }}>{(roomAssignments||[]).filter(ra=>ra.familyId===fam.id).map(ra=>ra.roomName).filter((v,i,a)=>a.indexOf(v)===i).join(", ")||"—"}</p></div>
@@ -923,11 +923,11 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                           <span style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "white" }}>{m.name}</span>
-                          {m.age != null && <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.11)", padding: "2px 8px", borderRadius: 8 }}>{m.age} ans</span>}
+                          {m.age != null && <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.13)", padding: "2px 8px", borderRadius: 8 }}>{m.age} ans</span>}
                         </div>
                         {m.bio && !isEd && <p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "4px 0 0", fontStyle: "italic" }}>"{m.bio}"</p>}
                       </div>
-                      {!isEd && <button onClick={() => startEdit(fam.id, m.id)} style={{ padding: "6px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.11)", color: "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 11 }}>✏️</button>}
+                      {!isEd && <button onClick={() => startEdit(fam.id, m.id)} style={{ padding: "6px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 11 }}>✏️</button>}
                     </div>
                     {!isEd && (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 8 }}>
@@ -939,7 +939,7 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
                       <div style={{ marginTop: 12, padding: 16, borderRadius: 16, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
                         <label style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 }}>Avatar</label>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 14 }}>
-                          {avatars.map(av => (<button key={av} onClick={() => setEd(d => ({ ...d, avatar: av }))} style={{ width: 36, height: 36, borderRadius: 10, border: ed.avatar === av ? `2px solid ${fam.color}` : "2px solid transparent", cursor: "pointer", fontSize: 20, background: ed.avatar === av ? `${fam.color}33` : "rgba(255,255,255,0.11)" }}>{av}</button>))}
+                          {avatars.map(av => (<button key={av} onClick={() => setEd(d => ({ ...d, avatar: av }))} style={{ width: 36, height: 36, borderRadius: 10, border: ed.avatar === av ? `2px solid ${fam.color}` : "2px solid transparent", cursor: "pointer", fontSize: 20, background: ed.avatar === av ? `${fam.color}33` : "rgba(255,255,255,0.13)" }}>{av}</button>))}
                         </div>
                         <label style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 }}>Mini bio / citation</label>
                         <input value={ed.bio} onChange={e => setEd(d => ({ ...d, bio: e.target.value }))} placeholder="Ex: Roi du barbecue et de la sieste..."
@@ -949,11 +949,11 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
                           style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 13, fontFamily: F, outline: "none", marginBottom: 14, boxSizing: "border-box" }} />
                         <label style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 }}>Activités préférées</label>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 16 }}>
-                          {ALL_ACTIVITY_TAGS.map(tag => (<button key={tag} onClick={() => togAct(tag)} style={{ padding: "5px 10px", borderRadius: 10, border: "none", cursor: "pointer", background: ed.activities.includes(tag) ? `${fam.color}30` : "rgba(255,255,255,0.11)", color: ed.activities.includes(tag) ? fam.color : "rgba(255,255,255,0.35)", fontFamily: F, fontSize: 11, fontWeight: ed.activities.includes(tag) ? 600 : 400 }}>{tag}</button>))}
+                          {ALL_ACTIVITY_TAGS.map(tag => (<button key={tag} onClick={() => togAct(tag)} style={{ padding: "5px 10px", borderRadius: 10, border: "none", cursor: "pointer", background: ed.activities.includes(tag) ? `${fam.color}30` : "rgba(255,255,255,0.13)", color: ed.activities.includes(tag) ? fam.color : "rgba(255,255,255,0.35)", fontFamily: F, fontSize: 11, fontWeight: ed.activities.includes(tag) ? 600 : 400 }}>{tag}</button>))}
                         </div>
                         <div style={{ display: "flex", gap: 8 }}>
                           <button onClick={() => saveEdit(fam.id, m.id)} style={{ padding: "10px 24px", borderRadius: 12, border: "none", cursor: "pointer", background: fam.color, color: "white", fontWeight: 700, fontSize: 13, fontFamily: F }}>💾 Sauvegarder</button>
-                          <button onClick={() => setEditing(null)} style={{ padding: "10px 24px", borderRadius: 12, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.11)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
+                          <button onClick={() => setEditing(null)} style={{ padding: "10px 24px", borderRadius: 12, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
                         </div>
                       </div>
                     )}
@@ -966,14 +966,14 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
       </div>
 
       {/* Créer une nouvelle famille */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.11)", paddingTop: 28, marginTop: 12 }}>
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.13)", paddingTop: 28, marginTop: 12 }}>
         <div style={{ textAlign: "center", marginBottom: 16 }}>
-          <button onClick={() => { setShowAddFamily(!showAddFamily); setFamForm(BLANK_FAM_FORM); }} style={{ padding: "12px 28px", borderRadius: 30, border: "none", cursor: "pointer", background: showAddFamily ? "rgba(255,255,255,0.11)" : "linear-gradient(135deg,#FFD166,#FF8C42)", color: showAddFamily ? "rgba(255,255,255,0.5)" : "#0F141E", fontWeight: 700, fontSize: 14, fontFamily: F }}>
+          <button onClick={() => { setShowAddFamily(!showAddFamily); setFamForm(BLANK_FAM_FORM); }} style={{ padding: "12px 28px", borderRadius: 30, border: "none", cursor: "pointer", background: showAddFamily ? "rgba(255,255,255,0.13)" : "linear-gradient(135deg,#FFD166,#FF8C42)", color: showAddFamily ? "rgba(255,255,255,0.5)" : "#0F141E", fontWeight: 700, fontSize: 14, fontFamily: F }}>
             {showAddFamily ? "✕ Annuler" : "➕ Créer une nouvelle famille"}
           </button>
         </div>
         {showAddFamily && (
-          <div style={{ padding: 28, borderRadius: 24, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.08)", maxWidth: 600, margin: "0 auto" }}>
+          <div style={{ padding: 28, borderRadius: 24, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", maxWidth: 600, margin: "0 auto" }}>
             <h3 style={{ fontFamily: PF, fontSize: 20, color: "#FFD166", margin: "0 0 18px" }}>➕ Nouvelle famille</h3>
             <div style={{ marginBottom: 14 }}>
               <label style={labelStyle}>Nom de la famille *</label>
@@ -983,7 +983,7 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
               <div>
                 <label style={labelStyle}>Emoji</label>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                  {FAMILY_EMOJIS.map(em => (<button key={em} onClick={() => setFamForm(d => ({ ...d, emoji: em }))} style={{ width: 34, height: 34, borderRadius: 9, border: famForm.emoji === em ? "2px solid #FFD166" : "2px solid transparent", cursor: "pointer", fontSize: 19, background: famForm.emoji === em ? "rgba(255,200,60,0.15)" : "rgba(255,255,255,0.11)" }}>{em}</button>))}
+                  {FAMILY_EMOJIS.map(em => (<button key={em} onClick={() => setFamForm(d => ({ ...d, emoji: em }))} style={{ width: 34, height: 34, borderRadius: 9, border: famForm.emoji === em ? "2px solid #FFD166" : "2px solid transparent", cursor: "pointer", fontSize: 19, background: famForm.emoji === em ? "rgba(255,200,60,0.15)" : "rgba(255,255,255,0.13)" }}>{em}</button>))}
                 </div>
               </div>
               <div>
@@ -1012,7 +1012,7 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={createFamily} disabled={!canCreateFam} style={{ padding: "11px 26px", borderRadius: 13, border: "none", cursor: canCreateFam ? "pointer" : "default", background: canCreateFam ? "linear-gradient(135deg,#FFD166,#FF8C42)" : "rgba(255,255,255,0.08)", color: canCreateFam ? "#0F141E" : "rgba(255,255,255,0.3)", fontWeight: 700, fontSize: 13, fontFamily: F }}>✓ Créer la famille</button>
-              <button onClick={() => { setShowAddFamily(false); setFamForm(BLANK_FAM_FORM); }} style={{ padding: "11px 18px", borderRadius: 13, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.11)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
+              <button onClick={() => { setShowAddFamily(false); setFamForm(BLANK_FAM_FORM); }} style={{ padding: "11px 18px", borderRadius: 13, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
             </div>
           </div>
         )}
@@ -1071,7 +1071,7 @@ function ShoppingSection({ meals, shoppingItems, setShoppingItems, currentUser, 
           <h3 style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#6BBF6B", margin: "0 0 16px", textTransform: "uppercase", letterSpacing: 1 }}>🍽️ Repas planifiés</h3>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 8 }}>
             {mealSuggestions.map((s, i) => (
-              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.11)" }}>
+              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.13)" }}>
                 <span style={{ fontSize: 14, marginTop: 1 }}>{s.type === "lunch" ? "🥗" : "🌙"}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)", marginBottom: 2, textTransform: "capitalize" }}>{s.dateLabel} · {s.typeLabel}</div>
@@ -1123,7 +1123,7 @@ function ShoppingSection({ meals, shoppingItems, setShoppingItems, currentUser, 
             const adder = nameMap[item.addedBy];
             const checker = item.checkedBy ? nameMap[item.checkedBy] : null;
             return (
-              <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 18px", borderRadius: 14, background: item.checked ? "rgba(107,191,107,0.05)" : "rgba(255,255,255,0.07)", border: `1px solid ${item.checked ? "rgba(107,191,107,0.2)" : "rgba(255,255,255,0.11)"}`, transition: "all 0.2s" }}>
+              <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 18px", borderRadius: 14, background: item.checked ? "rgba(107,191,107,0.05)" : "rgba(255,255,255,0.03)", border: `1px solid ${item.checked ? "rgba(107,191,107,0.2)" : "rgba(255,255,255,0.13)"}`, transition: "all 0.2s" }}>
                 <button onClick={() => toggleItem(item.id)} style={{ width: 26, height: 26, borderRadius: 8, border: `2px solid ${item.checked ? "#6BBF6B" : "rgba(255,255,255,0.2)"}`, background: item.checked ? "#6BBF6B" : "transparent", cursor: "pointer", color: "white", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                   {item.checked ? "✓" : ""}
                 </button>
@@ -1248,11 +1248,11 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
                 <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>Total dépensé</div>
                 <div style={{ fontFamily: PF, fontSize: 28, fontWeight: 900, color: "#FFD166" }}>{fmtEur(totalSpent)}</div>
               </div>
-              <div style={{ padding: "14px 20px", borderRadius: 16, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.11)", flex: 1 }}>
+              <div style={{ padding: "14px 20px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.13)", flex: 1 }}>
                 <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>{expenses.length} dépense{expenses.length > 1 ? "s" : ""}</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
                   {EXPENSE_CATS.filter(cat => expenses.some(e => e.category === cat.id)).map(cat => (
-                    <span key={cat.id} style={{ fontFamily: F, fontSize: 11, padding: "2px 8px", borderRadius: 8, background: "rgba(255,255,255,0.11)", color: "rgba(255,255,255,0.5)" }}>{cat.icon} {cat.label}</span>
+                    <span key={cat.id} style={{ fontFamily: F, fontSize: 11, padding: "2px 8px", borderRadius: 8, background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.5)" }}>{cat.icon} {cat.label}</span>
                   ))}
                 </div>
               </div>
@@ -1268,7 +1268,7 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
 
           {/* Add form */}
           {showForm && (
-            <div style={{ padding: 24, borderRadius: 20, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.08)", marginBottom: 24 }}>
+            <div style={{ padding: 24, borderRadius: 20, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", marginBottom: 24 }}>
               <h3 style={{ fontFamily: PF, fontSize: 18, color: "#FFD166", margin: "0 0 20px" }}>➕ Nouvelle dépense</h3>
 
               {/* Description + Montant */}
@@ -1313,15 +1313,15 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                   <label style={{ ...lbl, margin: 0 }}>Concernés par la dépense * <span style={{ color: "rgba(255,255,255,0.25)" }}>({form.participantIds.length} sélectionné{form.participantIds.length > 1 ? "s" : ""})</span></label>
                   <div style={{ display: "flex", gap: 6 }}>
-                    <button onClick={() => setForm(f => ({ ...f, participantIds: allMembers.map(m => m.id) }))} style={{ padding: "3px 10px", borderRadius: 14, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.11)", color: "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 11 }}>Tous</button>
-                    <button onClick={() => setForm(f => ({ ...f, participantIds: [] }))} style={{ padding: "3px 10px", borderRadius: 14, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.11)", color: "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 11 }}>Aucun</button>
+                    <button onClick={() => setForm(f => ({ ...f, participantIds: allMembers.map(m => m.id) }))} style={{ padding: "3px 10px", borderRadius: 14, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 11 }}>Tous</button>
+                    <button onClick={() => setForm(f => ({ ...f, participantIds: [] }))} style={{ padding: "3px 10px", borderRadius: 14, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 11 }}>Aucun</button>
                   </div>
                 </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
                   {allMembers.map(m => {
                     const sel = form.participantIds.includes(m.id);
                     return (
-                      <button key={m.id} onClick={() => toggleParticipant(m.id)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 20, border: sel ? `1px solid ${m.familyColor}55` : "1px solid rgba(255,255,255,0.08)", cursor: "pointer", background: sel ? `${m.familyColor}22` : "rgba(255,255,255,0.07)", color: sel ? m.familyColor : "rgba(255,255,255,0.35)", fontFamily: F, fontSize: 12, fontWeight: sel ? 600 : 400 }}>
+                      <button key={m.id} onClick={() => toggleParticipant(m.id)} style={{ display: "flex", alignItems: "center", gap: 5, padding: "6px 12px", borderRadius: 20, border: sel ? `1px solid ${m.familyColor}55` : "1px solid rgba(255,255,255,0.08)", cursor: "pointer", background: sel ? `${m.familyColor}22` : "rgba(255,255,255,0.03)", color: sel ? m.familyColor : "rgba(255,255,255,0.35)", fontFamily: F, fontSize: 12, fontWeight: sel ? 600 : 400 }}>
                         <span>{m.avatar}</span>
                         <span>{m.name}</span>
                         {m.role === "child" && m.age != null && <span style={{ fontSize: 10, opacity: 0.6 }}>{m.age}a</span>}
@@ -1351,7 +1351,7 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
 
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={addExpense} disabled={!canAdd} style={{ padding: "11px 26px", borderRadius: 13, border: "none", cursor: canAdd ? "pointer" : "default", background: canAdd ? "linear-gradient(135deg,#FFD166,#FF8C42)" : "rgba(255,255,255,0.08)", color: canAdd ? "#0F141E" : "rgba(255,255,255,0.3)", fontWeight: 700, fontSize: 13, fontFamily: F }}>✓ Ajouter</button>
-                <button onClick={() => { setShowForm(false); setForm(BLANK_EXP); setReceiptPreview(null); }} style={{ padding: "11px 18px", borderRadius: 13, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.11)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
+                <button onClick={() => { setShowForm(false); setForm(BLANK_EXP); setReceiptPreview(null); }} style={{ padding: "11px 18px", borderRadius: 13, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
               </div>
             </div>
           )}
@@ -1370,7 +1370,7 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
                 const sharePerPerson = exp.participantIds.length > 0 ? exp.amount / exp.participantIds.length : 0;
                 const isExpanded = expandedId === exp.id;
                 return (
-                  <div key={exp.id} style={{ borderRadius: 16, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.11)", overflow: "hidden" }}>
+                  <div key={exp.id} style={{ borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.13)", overflow: "hidden" }}>
                     <div onClick={() => setExpandedId(isExpanded ? null : exp.id)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", cursor: "pointer" }}>
                       <span style={{ fontSize: 22, flexShrink: 0 }}>{cat.icon}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
@@ -1428,7 +1428,7 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
                   const isPos = bal > 0.01, isNeg = bal < -0.01;
                   const color = isPos ? "#6BBF6B" : isNeg ? "#EF4444" : "rgba(255,255,255,0.4)";
                   return (
-                    <div key={m.id} style={{ padding: "16px 18px", borderRadius: 16, background: isPos ? "rgba(107,191,107,0.06)" : isNeg ? "rgba(239,68,68,0.06)" : "rgba(255,255,255,0.07)", border: `1px solid ${isPos ? "rgba(107,191,107,0.2)" : isNeg ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.11)"}` }}>
+                    <div key={m.id} style={{ padding: "16px 18px", borderRadius: 16, background: isPos ? "rgba(107,191,107,0.06)" : isNeg ? "rgba(239,68,68,0.06)" : "rgba(255,255,255,0.03)", border: `1px solid ${isPos ? "rgba(107,191,107,0.2)" : isNeg ? "rgba(239,68,68,0.15)" : "rgba(255,255,255,0.13)"}` }}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                         <span style={{ fontSize: 26 }}>{m.avatar}</span>
                         <div>
@@ -1458,7 +1458,7 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
                       const from = memberMap[t.from], to = memberMap[t.to];
                       if (!from || !to) return null;
                       return (
-                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", borderRadius: 16, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.07)" }}>
+                        <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.03)" }}>
                           <span style={{ fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", gap: 6 }}>
                             <span style={{ fontSize: 22 }}>{from.avatar}</span>
                             <span style={{ fontWeight: 600, color: "#EF4444" }}>{from.name}</span>
@@ -1504,7 +1504,7 @@ function RulesSection() {
       <SectionTitle icon="📜" title="Les Règles d'Or" subtitle="Le pacte sacré de la Maison du Bonheur" />
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
         {rules.map((r, i) => (
-          <div key={i} style={{ padding: "18px 20px", borderRadius: 16, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.11)" }}>
+          <div key={i} style={{ padding: "18px 20px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.13)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><span style={{ fontSize: 24 }}>{r.icon}</span><h4 style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#FFD166", margin: 0 }}>{r.title}</h4></div>
             <p style={{ fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.5)", margin: 0, lineHeight: 1.5 }}>{r.text}</p>
           </div>
@@ -1531,7 +1531,7 @@ function BudgetSection({ families, totalCost, setTotalCost, roomAssignments }) {
             <input type="number" value={tempCost} onChange={e => setTempCost(e.target.value)} style={{ ...inputStyle, width: 140, fontSize: 22, textAlign: "center" }} />
             <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 22 }}>€</span>
             <button onClick={() => { const v = Number(tempCost); if (v > 0) { setTotalCost(v); saveData("bonheur-totalCost", v); } setEditingCost(false); }} style={{ padding: "10px 20px", borderRadius: 12, border: "none", cursor: "pointer", background: "#FFD166", color: "#0F141E", fontWeight: 700, fontFamily: F }}>✓</button>
-            <button onClick={() => setEditingCost(false)} style={{ padding: "10px 14px", borderRadius: 12, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.11)", color: "rgba(255,255,255,0.4)", fontFamily: F }}>✕</button>
+            <button onClick={() => setEditingCost(false)} style={{ padding: "10px 14px", borderRadius: 12, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontFamily: F }}>✕</button>
           </div>
         ) : (
           <div>
@@ -1629,7 +1629,7 @@ export default function App() {
           <div style={{ padding: "40px 20px", maxWidth: 920, margin: "0 auto" }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 16 }}>
               {[{ icon: "🏡", stat: "19", label: "Places max" }, { icon: "🛏️", stat: "6", label: "Chambres" }, { icon: "🏊", stat: "12×6m", label: "Piscine" }, { icon: "🌳", stat: "∞", label: "Nature" }].map((s, i) => (
-                <div key={i} style={{ textAlign: "center", padding: "24px 16px", borderRadius: 20, background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.11)" }}>
+                <div key={i} style={{ textAlign: "center", padding: "24px 16px", borderRadius: 20, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.13)" }}>
                   <span style={{ fontSize: 32 }}>{s.icon}</span>
                   <div style={{ fontFamily: PF, fontSize: 32, fontWeight: 900, color: "#FFD166", margin: "8px 0 2px" }}>{s.stat}</div>
                   <div style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: 1 }}>{s.label}</div>
