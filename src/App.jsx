@@ -347,16 +347,16 @@ function Hero({ families }) {
       <div style={{ position: "relative", zIndex: 2, maxWidth: 700 }}>
         <div style={{ fontSize: 72, marginBottom: 8, filter: "drop-shadow(0 0 30px rgba(255,200,60,0.4))" }}>🏡</div>
         <h1 style={{ fontFamily: PF, fontSize: "clamp(38px,8vw,76px)", fontWeight: 900, background: "linear-gradient(135deg, #FFD166 0%, #FFB347 50%, #FF8C42 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", margin: "0 0 8px", lineHeight: 1.05, letterSpacing: "-1px" }}>La Maison du Bonheur</h1>
-        <p style={{ fontFamily: F, fontSize: "clamp(13px,2.5vw,18px)", color: "rgba(255,255,255,0.6)", fontWeight: 300, letterSpacing: 8, textTransform: "uppercase", margin: "0 0 36px" }}>Nougerède &bull; Été 2026</p>
+        <p style={{ fontFamily: F, fontSize: "clamp(13px,2.5vw,18px)", color: "rgba(255,255,255,0.85)", fontWeight: 300, letterSpacing: 8, textTransform: "uppercase", margin: "0 0 36px" }}>Nougerède &bull; Été 2026</p>
         <div style={{ display: "inline-block", padding: "14px 28px", borderRadius: 20, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)", marginBottom: 44 }}>
-          <p style={{ fontFamily: F, color: "rgba(255,255,255,0.45)", fontSize: 13, margin: "0 0 3px", letterSpacing: 2, textTransform: "uppercase" }}>11 — 25 Juillet 2026</p>
-          <p style={{ fontFamily: F, color: "rgba(255,255,255,0.3)", fontSize: 11, margin: 0 }}>14 nuits &bull; Salles-Lavalette &bull; {families.length} famille{families.length > 1 ? "s" : ""}, {families.reduce((s, f) => s + f.members.length, 0)} aventurier{families.reduce((s, f) => s + f.members.length, 0) > 1 ? "s" : ""}</p>
+          <p style={{ fontFamily: F, color: "rgba(255,255,255,0.75)", fontSize: 13, margin: "0 0 3px", letterSpacing: 2, textTransform: "uppercase" }}>11 — 25 Juillet 2026</p>
+          <p style={{ fontFamily: F, color: "rgba(255,255,255,0.6)", fontSize: 11, margin: 0 }}>14 nuits &bull; Salles-Lavalette &bull; {families.length} famille{families.length > 1 ? "s" : ""}, {families.reduce((s, f) => s + f.members.length, 0)} aventurier{families.reduce((s, f) => s + f.members.length, 0) > 1 ? "s" : ""}</p>
         </div>
         <div style={{ display: "flex", justifyContent: "center", gap: 14, flexWrap: "wrap", marginBottom: 44 }}>
           {[{ val: count.days, label: "Jours" }, { val: count.hours, label: "Heures" }, { val: count.minutes, label: "Min" }, { val: count.seconds, label: "Sec" }].map((c, i) => (
             <div key={i} style={{ width: 82, padding: "18px 8px", borderRadius: 18, background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)" }}>
               <div style={{ fontFamily: PF, fontSize: 38, fontWeight: 900, color: "#FFD166", lineHeight: 1 }}>{String(c.val).padStart(2, "0")}</div>
-              <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: 2, marginTop: 6 }}>{c.label}</div>
+              <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: 2, marginTop: 6 }}>{c.label}</div>
             </div>
           ))}
         </div>
@@ -365,7 +365,7 @@ function Hero({ families }) {
             <div key={f.id} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: 40, background: `${f.color}18`, border: `1px solid ${f.color}33` }}>
               <span style={{ fontSize: 20 }}>{f.emoji}</span>
               <span style={{ fontFamily: F, fontSize: 13, fontWeight: 600, color: f.color }}>{f.name}</span>
-              <span style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.25)" }}>({f.members.length})</span>
+              <span style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.5)" }}>({f.members.length})</span>
             </div>
           ))}
         </div>
@@ -380,7 +380,7 @@ function SectionTitle({ icon, title, subtitle }) {
     <div style={{ textAlign: "center", padding: "48px 20px 28px" }}>
       <span style={{ fontSize: 44, display: "block", marginBottom: 8 }}>{icon}</span>
       <h2 style={{ fontFamily: PF, fontSize: "clamp(28px,5vw,42px)", fontWeight: 800, color: "#FFD166", margin: "0 0 8px" }}>{title}</h2>
-      {subtitle && <p style={{ fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.4)", margin: 0, maxWidth: 520, marginInline: "auto" }}>{subtitle}</p>}
+      {subtitle && <p style={{ fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.7)", margin: 0, maxWidth: 520, marginInline: "auto" }}>{subtitle}</p>}
     </div>
   );
 }
@@ -398,7 +398,7 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
   const [editingRA, setEditingRA] = useState(null);
   const [datesForm, setDatesForm] = useState({});
   const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 13, fontFamily: F, outline: "none", boxSizing: "border-box" };
-  const labelStyle = { fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 };
+  const labelStyle = { fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.7)", display: "block", marginBottom: 6 };
   const fmtDate = d => new Date(d + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 
   // Chevauchement : overlap si checkIn A < checkOut B ET checkOut A > checkIn B
@@ -465,11 +465,11 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
                 <div style={{ width: 42, height: 42, borderRadius: 13, background: assignments[0] ? `${families.find(f=>f.id===assignments[0].familyId)?.color}22`:"rgba(255,255,255,0.13)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21 }}>{r.icon}</div>
                 <div style={{ flex: 1 }}>
                   <h3 style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "white", margin: 0 }}>{r.name}</h3>
-                  <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{r.level}</span>
+                  <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.65)" }}>{r.level}</span>
                 </div>
                 {isFree && <span style={{ background: "#2D6A4F", color: "white", fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 20, textTransform: "uppercase", letterSpacing: 1, fontFamily: F }}>Libre</span>}
               </div>
-              <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 12, lineHeight: 1.6 }}>
+              <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.7)", marginBottom: 12, lineHeight: 1.6 }}>
                 {r.beds.map((b, j) => <div key={j}>🛏️ {b}</div>)}
               </div>
 
@@ -485,11 +485,11 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
                         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
                           <span style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: fam.color }}>{fam.emoji} {fam.name}</span>
                           <div style={{ display: "flex", gap: 4 }}>
-                            <button onClick={() => { setEditingRA(ra.id); setDatesForm({ checkIn: ra.checkIn, checkOut: ra.checkOut }); }} style={{ padding: "2px 7px", borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)", fontSize: 10 }}>📅</button>
+                            <button onClick={() => { setEditingRA(ra.id); setDatesForm({ checkIn: ra.checkIn, checkOut: ra.checkOut }); }} style={{ padding: "2px 7px", borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.7)", fontSize: 10 }}>📅</button>
                             <button onClick={() => deleteAssignment(ra.id)} style={{ padding: "2px 7px", borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#EF4444", fontSize: 10 }}>✕</button>
                           </div>
                         </div>
-                        <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>
+                        <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.8)", marginBottom: 4 }}>
                           {members.map(m => `${m.avatar} ${m.name}${m.age != null ? ` (${m.age} ans)` : ""}`).join(" · ")}
                         </div>
                         {editingRA === ra.id ? (
@@ -500,11 +500,11 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
                             </div>
                             <div style={{ display: "flex", gap: 6 }}>
                               <button onClick={() => saveDates(ra.id)} style={{ padding: "5px 12px", borderRadius: 8, border: "none", cursor: "pointer", background: fam.color, color: "white", fontWeight: 700, fontSize: 11, fontFamily: F }}>✓ OK</button>
-                              <button onClick={() => setEditingRA(null)} style={{ padding: "5px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: F }}>✕</button>
+                              <button onClick={() => setEditingRA(null)} style={{ padding: "5px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.7)", fontSize: 11, fontFamily: F }}>✕</button>
                             </div>
                           </div>
                         ) : (
-                          <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>
+                          <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.6)" }}>
                             📅 {fmtDate(ra.checkIn)} → {fmtDate(ra.checkOut)} · {computeNights(ra.checkIn, ra.checkOut)} nuits
                           </div>
                         )}
@@ -516,7 +516,7 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
 
               {/* Bouton / formulaire d'affectation */}
               {!isOpen ? (
-                <button onClick={() => openAssignForm(r.name)} style={{ width: "100%", padding: "8px", borderRadius: 10, border: "1px dashed rgba(255,255,255,0.15)", cursor: "pointer", background: "transparent", color: "rgba(255,255,255,0.35)", fontFamily: F, fontSize: 12 }}>
+                <button onClick={() => openAssignForm(r.name)} style={{ width: "100%", padding: "8px", borderRadius: 10, border: "1px dashed rgba(255,255,255,0.15)", cursor: "pointer", background: "transparent", color: "rgba(255,255,255,0.65)", fontFamily: F, fontSize: 12 }}>
                   + Affecter une famille
                 </button>
               ) : (
@@ -538,7 +538,7 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
                           <label key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "7px 10px", borderRadius: 9, marginBottom: 4, background: checked ? `${selectedFamily.color}20` : "rgba(255,255,255,0.03)", border: `1px solid ${checked ? selectedFamily.color+"40" : "rgba(255,255,255,0.13)"}` }}>
                             <input type="checkbox" checked={checked} onChange={() => toggleMember(m.id)} style={{ accentColor: selectedFamily.color }} />
                             <span style={{ fontFamily: F, fontSize: 12, color: "white", flex: 1 }}>{m.avatar} {m.name}</span>
-                            <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>
+                            <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.6)" }}>
                               {m.role === "adult" ? "adulte" : `${m.age != null ? m.age : "?"}ans${isYoung ? " 👨‍👩requis" : ""}`}
                             </span>
                           </label>
@@ -553,7 +553,7 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
                   {assignError && <div style={{ fontFamily: F, fontSize: 11, color: "#EF4444", marginBottom: 8 }}>⚠️ {assignError}</div>}
                   <div style={{ display: "flex", gap: 6 }}>
                     <button onClick={submitAssignment} disabled={!assignForm.familyId || assignForm.memberIds.length === 0} style={{ padding: "8px 16px", borderRadius: 10, border: "none", cursor: assignForm.familyId && assignForm.memberIds.length > 0 ? "pointer" : "default", background: assignForm.familyId && assignForm.memberIds.length > 0 ? "linear-gradient(135deg,#FFD166,#FF8C42)" : "rgba(255,255,255,0.08)", color: assignForm.familyId && assignForm.memberIds.length > 0 ? "#0F141E" : "rgba(255,255,255,0.3)", fontWeight: 700, fontSize: 12, fontFamily: F }}>✓ Affecter</button>
-                    <button onClick={() => setAssigningRoom(null)} style={{ padding: "8px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontSize: 12, fontFamily: F }}>Annuler</button>
+                    <button onClick={() => setAssigningRoom(null)} style={{ padding: "8px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.7)", fontSize: 12, fontFamily: F }}>Annuler</button>
                   </div>
                 </div>
               )}
@@ -613,7 +613,7 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
       </div>
       <div style={{ background: "rgba(255,255,255,0.03)", borderRadius: 24, padding: 28, border: "1px solid rgba(255,255,255,0.13)" }}>
         <h3 style={{ fontFamily: PF, fontSize: 22, color: "#FFD166", margin: "0 0 4px" }}>Jour {selectedDay + 1}</h3>
-        <p style={{ fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.35)", margin: "0 0 24px", textTransform: "capitalize" }}>{DATES[selectedDay].full}</p>
+        <p style={{ fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.65)", margin: "0 0 24px", textTransform: "capitalize" }}>{DATES[selectedDay].full}</p>
         {slots.map(s => {
           const c = getCounts(s.key);
           return (
@@ -622,7 +622,7 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
                 <span style={{ fontSize: 24 }}>{s.icon}</span>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontFamily: F, fontSize: 11, color: s.color, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1, marginBottom: 3 }}>{s.label}</div>
-                  <div style={{ fontFamily: F, fontSize: 15, color: "rgba(255,255,255,0.8)", fontWeight: 500 }}>{DEFAULT_PLANNING[selectedDay][s.key]}</div>
+                  <div style={{ fontFamily: F, fontSize: 15, color: "rgba(255,255,255,0.95)", fontWeight: 500 }}>{DEFAULT_PLANNING[selectedDay][s.key]}</div>
                 </div>
                 <div style={{ textAlign: "right" }}>
                   {c.y > 0 && <span style={{ fontFamily: F, fontSize: 11, color: "#6BBF6B", marginRight: 8 }}>✓ {c.y}</span>}
@@ -635,7 +635,7 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
                   return (
                     <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 6px", borderRadius: 10, background: "rgba(0,0,0,0.2)" }}>
                       <span style={{ fontSize: 14 }}>{m.avatar}</span>
-                      <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.5)", marginRight: 2, minWidth: 44 }}>{m.name.split("-")[0]}</span>
+                      <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.8)", marginRight: 2, minWidth: 44 }}>{m.name.split("-")[0]}</span>
                       {[["yes", "✓", "#2D6A4F"], ["no", "✗", "#991B1B"], ["maybe", "?", "#92400E"]].map(([v, l, bg]) => (
                         <button key={v} onClick={() => toggleRsvp(m.id, s.key, v)} style={{ width: 24, height: 24, borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, background: st === v ? bg : "rgba(255,255,255,0.13)", color: st === v ? "white" : "rgba(255,255,255,0.3)" }}>{l}</button>
                       ))}
@@ -649,12 +649,12 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
 
         {dayProps.length > 0 && (
           <div style={{ marginTop: 16 }}>
-            <h4 style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.5)", marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>💡 Propositions</h4>
+            <h4 style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.8)", marginBottom: 10, textTransform: "uppercase", letterSpacing: 1 }}>💡 Propositions</h4>
             {dayProps.map(p => (
               <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.13)", marginBottom: 8 }}>
                 <div style={{ flex: 1 }}>
-                  <span style={{ fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.8)" }}>{p.text}</span>
-                  <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
+                  <span style={{ fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.95)" }}>{p.text}</span>
+                  <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>
                     par {nameMap[p.author] || p.author} &bull; {p.slot === "am" ? "matin" : p.slot === "pm" ? "aprem" : "soirée"}
                   </div>
                 </div>
@@ -675,7 +675,7 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
               style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 14, fontFamily: F, outline: "none", marginBottom: 10, boxSizing: "border-box" }} />
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={addProp} style={{ padding: "10px 24px", borderRadius: 12, border: "none", cursor: "pointer", background: "#FFD166", color: "#0F141E", fontWeight: 700, fontSize: 13, fontFamily: F }}>Proposer</button>
-              <button onClick={() => setShowForm(false)} style={{ padding: "10px 24px", borderRadius: 12, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
+              <button onClick={() => setShowForm(false)} style={{ padding: "10px 24px", borderRadius: 12, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.7)", fontSize: 13, fontFamily: F }}>Annuler</button>
             </div>
           </div>
         ) : (
@@ -734,7 +734,7 @@ function CookingSection({ families, roomAssignments, meals, setMeals }) {
           <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 20, background: `${m.color}15`, border: `1px solid ${m.color}30` }}>
             <span style={{ fontSize: 15 }}>{m.avatar}</span>
             <span style={{ fontFamily: F, fontSize: 11, color: m.color, fontWeight: 600 }}>{m.name}</span>
-            <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{mealCounts[m.id] || 0}×</span>
+            <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.65)" }}>{mealCounts[m.id] || 0}×</span>
           </div>
         ))}
       </div>
@@ -760,7 +760,7 @@ function CookingSection({ families, roomAssignments, meals, setMeals }) {
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                     <span style={{ fontFamily: F, fontSize: 10, fontWeight: 700, color, textTransform: "uppercase", letterSpacing: 0.8, minWidth: 58 }}>{icon} {label}</span>
                     {!pair ? (
-                      <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.15)", fontStyle: "italic" }}>—</span>
+                      <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.35)", fontStyle: "italic" }}>—</span>
                     ) : (
                       <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                         {pair.map((p, pi) => (
@@ -783,12 +783,12 @@ function CookingSection({ families, roomAssignments, meals, setMeals }) {
                           style={{ flex: 1, padding: "5px 10px", borderRadius: 9, border: `1px solid ${color}55`, background: "rgba(0,0,0,0.35)", color: "white", fontSize: 12, fontFamily: F, outline: "none" }}
                         />
                         <button onClick={() => saveMeal(dayKey, type)} style={{ padding: "5px 10px", borderRadius: 9, border: "none", cursor: "pointer", background: color, color: type === "lunch" ? "#0F141E" : "white", fontWeight: 700, fontSize: 12 }}>✓</button>
-                        <button onClick={() => setEditingMeal(null)} style={{ padding: "5px 8px", borderRadius: 9, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontSize: 12 }}>✕</button>
+                        <button onClick={() => setEditingMeal(null)} style={{ padding: "5px 8px", borderRadius: 9, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.7)", fontSize: 12 }}>✕</button>
                       </div>
                     ) : mealText ? (
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ flex: 1, fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.7)", lineHeight: 1.4, fontStyle: "italic" }}>🍽 {mealText}</span>
-                        <button onClick={() => startEdit(dayKey, type)} style={{ padding: "3px 6px", borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.3)", fontSize: 10 }}>✏️</button>
+                        <span style={{ flex: 1, fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.9)", lineHeight: 1.4, fontStyle: "italic" }}>🍽 {mealText}</span>
+                        <button onClick={() => startEdit(dayKey, type)} style={{ padding: "3px 6px", borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.05)", color: "rgba(255,255,255,0.6)", fontSize: 10 }}>✏️</button>
                         <button onClick={() => clearMeal(dayKey, type)} style={{ padding: "3px 6px", borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.08)", color: "rgba(239,68,68,0.5)", fontSize: 10 }}>✕</button>
                       </div>
                     ) : (
@@ -821,7 +821,7 @@ function ActivitiesSection() {
             <span style={{ fontSize: 32, lineHeight: 1 }}>{a.icon}</span>
             <div>
               <h4 style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "white", margin: "0 0 4px" }}>{a.name}</h4>
-              <p style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.4)", margin: "0 0 6px" }}>{a.desc}</p>
+              <p style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.7)", margin: "0 0 6px" }}>{a.desc}</p>
               <span style={{ fontFamily: F, fontSize: 10, color: "#FFD166", background: "rgba(255,200,60,0.1)", padding: "2px 8px", borderRadius: 8 }}>⏱ {a.duration}</span>
             </div>
           </div>
@@ -837,7 +837,7 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
   const BLANK_MEMBER = { name: "", role: "adult", age: "" };
   const BLANK_FAM_FORM = { name: "", emoji: "🦄", color: "#9B59B6", members: [{ ...BLANK_MEMBER }] };
   const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 13, fontFamily: F, outline: "none", boxSizing: "border-box" };
-  const labelStyle = { fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 };
+  const labelStyle = { fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.7)", display: "block", marginBottom: 6 };
 
   const [editing, setEditing] = useState(null);
   const [ed, setEd] = useState({});
@@ -896,7 +896,7 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
     <div style={{ padding: "0 20px 40px", maxWidth: 920, margin: "0 auto" }}>
       <SectionTitle icon="👥" title="Les Familles" subtitle="Clique ✏️ pour personnaliser ton profil !" />
       <div style={{ marginBottom: 28, padding: "16px 20px", borderRadius: 16, background: "rgba(255,200,60,0.06)", border: "1px solid rgba(255,200,60,0.15)", textAlign: "center" }}>
-        <p style={{ fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.5)", margin: "0 0 10px" }}>👋 Qui es-tu ? <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>(pour signer tes votes & propositions)</span></p>
+        <p style={{ fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.8)", margin: "0 0 10px" }}>👋 Qui es-tu ? <span style={{ fontSize: 10, color: "rgba(255,255,255,0.6)" }}>(pour signer tes votes & propositions)</span></p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 6, justifyContent: "center" }}>
           {families.flatMap(f => f.members.filter(m => m.role === "adult").map(m => (
             <button key={m.id} onClick={() => { setCurrentUser(m.id); saveData("bonheur-currentUser", m.id); }}
@@ -911,7 +911,7 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
           <div key={fam.id} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 24, overflow: "hidden", border: `1px solid ${fam.color}33` }}>
             <div style={{ background: `linear-gradient(135deg, ${fam.color}25, ${fam.color}08)`, padding: "20px 24px", display: "flex", alignItems: "center", gap: 14, borderBottom: `1px solid ${fam.color}22` }}>
               <span style={{ fontSize: 40 }}>{fam.emoji}</span>
-              <div><h3 style={{ fontFamily: PF, fontSize: 22, fontWeight: 800, color: fam.color, margin: 0 }}>{fam.name}</h3><p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "2px 0 0" }}>{(roomAssignments||[]).filter(ra=>ra.familyId===fam.id).map(ra=>ra.roomName).filter((v,i,a)=>a.indexOf(v)===i).join(", ")||"—"}</p></div>
+              <div><h3 style={{ fontFamily: PF, fontSize: 22, fontWeight: 800, color: fam.color, margin: 0 }}>{fam.name}</h3><p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.65)", margin: "2px 0 0" }}>{(roomAssignments||[]).filter(ra=>ra.familyId===fam.id).map(ra=>ra.roomName).filter((v,i,a)=>a.indexOf(v)===i).join(", ")||"—"}</p></div>
             </div>
             <div style={{ padding: "12px 24px 20px" }}>
               {fam.members.map((m, mi) => {
@@ -923,11 +923,11 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
                       <div style={{ flex: 1 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
                           <span style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "white" }}>{m.name}</span>
-                          {m.age != null && <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)", background: "rgba(255,255,255,0.13)", padding: "2px 8px", borderRadius: 8 }}>{m.age} ans</span>}
+                          {m.age != null && <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.6)", background: "rgba(255,255,255,0.13)", padding: "2px 8px", borderRadius: 8 }}>{m.age} ans</span>}
                         </div>
-                        {m.bio && !isEd && <p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "4px 0 0", fontStyle: "italic" }}>"{m.bio}"</p>}
+                        {m.bio && !isEd && <p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.65)", margin: "4px 0 0", fontStyle: "italic" }}>"{m.bio}"</p>}
                       </div>
-                      {!isEd && <button onClick={() => startEdit(fam.id, m.id)} style={{ padding: "6px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 11 }}>✏️</button>}
+                      {!isEd && <button onClick={() => startEdit(fam.id, m.id)} style={{ padding: "6px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.7)", fontFamily: F, fontSize: 11 }}>✏️</button>}
                     </div>
                     {!isEd && (
                       <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginTop: 8 }}>
@@ -937,23 +937,23 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
                     )}
                     {isEd && (
                       <div style={{ marginTop: 12, padding: 16, borderRadius: 16, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
-                        <label style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 }}>Avatar</label>
+                        <label style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.7)", display: "block", marginBottom: 6 }}>Avatar</label>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 14 }}>
                           {avatars.map(av => (<button key={av} onClick={() => setEd(d => ({ ...d, avatar: av }))} style={{ width: 36, height: 36, borderRadius: 10, border: ed.avatar === av ? `2px solid ${fam.color}` : "2px solid transparent", cursor: "pointer", fontSize: 20, background: ed.avatar === av ? `${fam.color}33` : "rgba(255,255,255,0.13)" }}>{av}</button>))}
                         </div>
-                        <label style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 }}>Mini bio / citation</label>
+                        <label style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.7)", display: "block", marginBottom: 6 }}>Mini bio / citation</label>
                         <input value={ed.bio} onChange={e => setEd(d => ({ ...d, bio: e.target.value }))} placeholder="Ex: Roi du barbecue et de la sieste..."
                           style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 13, fontFamily: F, outline: "none", marginBottom: 14, boxSizing: "border-box" }} />
-                        <label style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 }}>Restrictions alimentaires</label>
+                        <label style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.7)", display: "block", marginBottom: 6 }}>Restrictions alimentaires</label>
                         <input value={ed.diet} onChange={e => setEd(d => ({ ...d, diet: e.target.value }))} placeholder="Ex: Végétarien, sans gluten..."
                           style={{ width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 13, fontFamily: F, outline: "none", marginBottom: 14, boxSizing: "border-box" }} />
-                        <label style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 }}>Activités préférées</label>
+                        <label style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.7)", display: "block", marginBottom: 6 }}>Activités préférées</label>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 4, marginBottom: 16 }}>
                           {ALL_ACTIVITY_TAGS.map(tag => (<button key={tag} onClick={() => togAct(tag)} style={{ padding: "5px 10px", borderRadius: 10, border: "none", cursor: "pointer", background: ed.activities.includes(tag) ? `${fam.color}30` : "rgba(255,255,255,0.13)", color: ed.activities.includes(tag) ? fam.color : "rgba(255,255,255,0.35)", fontFamily: F, fontSize: 11, fontWeight: ed.activities.includes(tag) ? 600 : 400 }}>{tag}</button>))}
                         </div>
                         <div style={{ display: "flex", gap: 8 }}>
                           <button onClick={() => saveEdit(fam.id, m.id)} style={{ padding: "10px 24px", borderRadius: 12, border: "none", cursor: "pointer", background: fam.color, color: "white", fontWeight: 700, fontSize: 13, fontFamily: F }}>💾 Sauvegarder</button>
-                          <button onClick={() => setEditing(null)} style={{ padding: "10px 24px", borderRadius: 12, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
+                          <button onClick={() => setEditing(null)} style={{ padding: "10px 24px", borderRadius: 12, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.7)", fontSize: 13, fontFamily: F }}>Annuler</button>
                         </div>
                       </div>
                     )}
@@ -1012,7 +1012,7 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
             </div>
             <div style={{ display: "flex", gap: 8 }}>
               <button onClick={createFamily} disabled={!canCreateFam} style={{ padding: "11px 26px", borderRadius: 13, border: "none", cursor: canCreateFam ? "pointer" : "default", background: canCreateFam ? "linear-gradient(135deg,#FFD166,#FF8C42)" : "rgba(255,255,255,0.08)", color: canCreateFam ? "#0F141E" : "rgba(255,255,255,0.3)", fontWeight: 700, fontSize: 13, fontFamily: F }}>✓ Créer la famille</button>
-              <button onClick={() => { setShowAddFamily(false); setFamForm(BLANK_FAM_FORM); }} style={{ padding: "11px 18px", borderRadius: 13, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
+              <button onClick={() => { setShowAddFamily(false); setFamForm(BLANK_FAM_FORM); }} style={{ padding: "11px 18px", borderRadius: 13, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.7)", fontSize: 13, fontFamily: F }}>Annuler</button>
             </div>
           </div>
         )}
@@ -1074,8 +1074,8 @@ function ShoppingSection({ meals, shoppingItems, setShoppingItems, currentUser, 
               <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.13)" }}>
                 <span style={{ fontSize: 14, marginTop: 1 }}>{s.type === "lunch" ? "🥗" : "🌙"}</span>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)", marginBottom: 2, textTransform: "capitalize" }}>{s.dateLabel} · {s.typeLabel}</div>
-                  <div style={{ fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.4 }}>{s.text}</div>
+                  <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.6)", marginBottom: 2, textTransform: "capitalize" }}>{s.dateLabel} · {s.typeLabel}</div>
+                  <div style={{ fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.95)", lineHeight: 1.4 }}>{s.text}</div>
                 </div>
                 <button onClick={() => {
                   const next = [...shoppingItems, { id: `si-${Date.now()}`, text: `[${s.typeLabel} ${s.dateLabel}] ${s.text}`, checked: false, checkedBy: null, addedBy: currentUser || "Anonyme", category: "meal" }];
@@ -1113,7 +1113,7 @@ function ShoppingSection({ meals, shoppingItems, setShoppingItems, currentUser, 
 
       {/* Liste */}
       {displayed.length === 0 ? (
-        <div style={{ textAlign: "center", padding: 48, color: "rgba(255,255,255,0.25)", fontFamily: F }}>
+        <div style={{ textAlign: "center", padding: 48, color: "rgba(255,255,255,0.5)", fontFamily: F }}>
           <div style={{ fontSize: 48, marginBottom: 12 }}>🛒</div>
           <div>{shoppingItems.length === 0 ? "Commence par planifier des repas dans le Planning, puis ajoute des articles !" : "Rien à afficher dans ce filtre."}</div>
         </div>
@@ -1129,7 +1129,7 @@ function ShoppingSection({ meals, shoppingItems, setShoppingItems, currentUser, 
                 </button>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontFamily: F, fontSize: 14, color: item.checked ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.85)", textDecoration: item.checked ? "line-through" : "none", lineHeight: 1.4 }}>{item.text}</div>
-                  <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>
+                  <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.5)", marginTop: 2 }}>
                     Ajouté par {adder ? `${adder.avatar} ${adder.name}` : item.addedBy}
                     {item.checked && checker && ` · Coché par ${checker.avatar} ${checker.name}`}
                   </div>
@@ -1162,7 +1162,7 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
   const [expandedId, setExpandedId] = useState(null);
 
   const inp = { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 13, fontFamily: F, outline: "none", boxSizing: "border-box" };
-  const lbl = { fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 5 };
+  const lbl = { fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.7)", display: "block", marginBottom: 5 };
 
   // Flat member list
   const allMembers = families.flatMap(f => f.members.map(m => ({ ...m, familyName: f.name, familyColor: f.color, familyEmoji: f.emoji })));
@@ -1245,14 +1245,14 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
           {expenses.length > 0 && (
             <div style={{ display: "flex", gap: 12, marginBottom: 20, flexWrap: "wrap" }}>
               <div style={{ padding: "14px 20px", borderRadius: 16, background: "rgba(255,200,60,0.08)", border: "1px solid rgba(255,200,60,0.15)", flex: 1 }}>
-                <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>Total dépensé</div>
+                <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>Total dépensé</div>
                 <div style={{ fontFamily: PF, fontSize: 28, fontWeight: 900, color: "#FFD166" }}>{fmtEur(totalSpent)}</div>
               </div>
               <div style={{ padding: "14px 20px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.13)", flex: 1 }}>
-                <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>{expenses.length} dépense{expenses.length > 1 ? "s" : ""}</div>
+                <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.7)", marginBottom: 4 }}>{expenses.length} dépense{expenses.length > 1 ? "s" : ""}</div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 4 }}>
                   {EXPENSE_CATS.filter(cat => expenses.some(e => e.category === cat.id)).map(cat => (
-                    <span key={cat.id} style={{ fontFamily: F, fontSize: 11, padding: "2px 8px", borderRadius: 8, background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.5)" }}>{cat.icon} {cat.label}</span>
+                    <span key={cat.id} style={{ fontFamily: F, fontSize: 11, padding: "2px 8px", borderRadius: 8, background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.8)" }}>{cat.icon} {cat.label}</span>
                   ))}
                 </div>
               </div>
@@ -1311,10 +1311,10 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
               {/* Participants */}
               <div style={{ marginBottom: 14 }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                  <label style={{ ...lbl, margin: 0 }}>Concernés par la dépense * <span style={{ color: "rgba(255,255,255,0.25)" }}>({form.participantIds.length} sélectionné{form.participantIds.length > 1 ? "s" : ""})</span></label>
+                  <label style={{ ...lbl, margin: 0 }}>Concernés par la dépense * <span style={{ color: "rgba(255,255,255,0.5)" }}>({form.participantIds.length} sélectionné{form.participantIds.length > 1 ? "s" : ""})</span></label>
                   <div style={{ display: "flex", gap: 6 }}>
-                    <button onClick={() => setForm(f => ({ ...f, participantIds: allMembers.map(m => m.id) }))} style={{ padding: "3px 10px", borderRadius: 14, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 11 }}>Tous</button>
-                    <button onClick={() => setForm(f => ({ ...f, participantIds: [] }))} style={{ padding: "3px 10px", borderRadius: 14, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 11 }}>Aucun</button>
+                    <button onClick={() => setForm(f => ({ ...f, participantIds: allMembers.map(m => m.id) }))} style={{ padding: "3px 10px", borderRadius: 14, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.7)", fontFamily: F, fontSize: 11 }}>Tous</button>
+                    <button onClick={() => setForm(f => ({ ...f, participantIds: [] }))} style={{ padding: "3px 10px", borderRadius: 14, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.7)", fontFamily: F, fontSize: 11 }}>Aucun</button>
                   </div>
                 </div>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
@@ -1330,7 +1330,7 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
                   })}
                 </div>
                 {form.participantIds.length > 0 && form.amount > 0 && (
-                  <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.3)", marginTop: 8 }}>
+                  <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.6)", marginTop: 8 }}>
                     → {(parseFloat(form.amount) / form.participantIds.length).toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} € par personne
                   </div>
                 )}
@@ -1338,9 +1338,9 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
 
               {/* Ticket de caisse */}
               <div style={{ marginBottom: 20 }}>
-                <label style={lbl}>Ticket de caisse <span style={{ color: "rgba(255,255,255,0.2)" }}>(optionnel)</span></label>
+                <label style={lbl}>Ticket de caisse <span style={{ color: "rgba(255,255,255,0.45)" }}>(optionnel)</span></label>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                  <label style={{ padding: "8px 16px", borderRadius: 10, border: "1px dashed rgba(255,255,255,0.15)", cursor: "pointer", fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.02)" }}>
+                  <label style={{ padding: "8px 16px", borderRadius: 10, border: "1px dashed rgba(255,255,255,0.15)", cursor: "pointer", fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.7)", background: "rgba(255,255,255,0.02)" }}>
                     📷 Choisir une photo
                     <input type="file" accept="image/*" onChange={handleReceipt} style={{ display: "none" }} />
                   </label>
@@ -1351,14 +1351,14 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
 
               <div style={{ display: "flex", gap: 8 }}>
                 <button onClick={addExpense} disabled={!canAdd} style={{ padding: "11px 26px", borderRadius: 13, border: "none", cursor: canAdd ? "pointer" : "default", background: canAdd ? "linear-gradient(135deg,#FFD166,#FF8C42)" : "rgba(255,255,255,0.08)", color: canAdd ? "#0F141E" : "rgba(255,255,255,0.3)", fontWeight: 700, fontSize: 13, fontFamily: F }}>✓ Ajouter</button>
-                <button onClick={() => { setShowForm(false); setForm(BLANK_EXP); setReceiptPreview(null); }} style={{ padding: "11px 18px", borderRadius: 13, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
+                <button onClick={() => { setShowForm(false); setForm(BLANK_EXP); setReceiptPreview(null); }} style={{ padding: "11px 18px", borderRadius: 13, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.7)", fontSize: 13, fontFamily: F }}>Annuler</button>
               </div>
             </div>
           )}
 
           {/* Expense list */}
           {sorted.length === 0 ? (
-            <div style={{ textAlign: "center", padding: 48, color: "rgba(255,255,255,0.25)", fontFamily: F }}>
+            <div style={{ textAlign: "center", padding: 48, color: "rgba(255,255,255,0.5)", fontFamily: F }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>💸</div>
               <div>Personne n'a encore rien payé. Ça ne va pas durer.</div>
             </div>
@@ -1374,20 +1374,20 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
                     <div onClick={() => setExpandedId(isExpanded ? null : exp.id)} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 16px", cursor: "pointer" }}>
                       <span style={{ fontSize: 22, flexShrink: 0 }}>{cat.icon}</span>
                       <div style={{ flex: 1, minWidth: 0 }}>
-                        <div style={{ fontFamily: F, fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,0.85)", marginBottom: 3 }}>{exp.description}</div>
-                        <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)" }}>
+                        <div style={{ fontFamily: F, fontSize: 14, fontWeight: 600, color: "rgba(255,255,255,1)", marginBottom: 3 }}>{exp.description}</div>
+                        <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.65)" }}>
                           {fmtDate(exp.date)} · {payer ? `${payer.avatar} ${payer.name}` : "?"} a payé · {exp.participantIds.length} personne{exp.participantIds.length > 1 ? "s" : ""}
                         </div>
                       </div>
                       <div style={{ textAlign: "right", flexShrink: 0 }}>
                         <div style={{ fontFamily: PF, fontSize: 20, fontWeight: 800, color: "#FFD166" }}>{fmtEur(exp.amount)}</div>
-                        <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{fmtEur(sharePerPerson)}/pers.</div>
+                        <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.6)" }}>{fmtEur(sharePerPerson)}/pers.</div>
                       </div>
-                      <span style={{ color: "rgba(255,255,255,0.2)", fontSize: 12, marginLeft: 4 }}>{isExpanded ? "▲" : "▼"}</span>
+                      <span style={{ color: "rgba(255,255,255,0.45)", fontSize: 12, marginLeft: 4 }}>{isExpanded ? "▲" : "▼"}</span>
                     </div>
                     {isExpanded && (
                       <div style={{ padding: "0 16px 14px", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-                        <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)", marginBottom: 8, marginTop: 10 }}>Concernés :</div>
+                        <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.65)", marginBottom: 8, marginTop: 10 }}>Concernés :</div>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: 5, marginBottom: 12 }}>
                           {exp.participantIds.map(pid => {
                             const m = memberMap[pid];
@@ -1415,7 +1415,7 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
       {view === "settlement" && (
         <>
           {expenses.length === 0 ? (
-            <div style={{ textAlign: "center", padding: 48, color: "rgba(255,255,255,0.25)", fontFamily: F }}>
+            <div style={{ textAlign: "center", padding: 48, color: "rgba(255,255,255,0.5)", fontFamily: F }}>
               <div style={{ fontSize: 48, marginBottom: 12 }}>⚖️</div>
               <div>Aucune dépense enregistrée pour l'instant.</div>
             </div>
@@ -1432,14 +1432,14 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
                         <span style={{ fontSize: 26 }}>{m.avatar}</span>
                         <div>
-                          <div style={{ fontFamily: F, fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.8)" }}>{m.name}</div>
-                          <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>{m.familyName}</div>
+                          <div style={{ fontFamily: F, fontSize: 13, fontWeight: 600, color: "rgba(255,255,255,0.95)" }}>{m.name}</div>
+                          <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.6)" }}>{m.familyName}</div>
                         </div>
                       </div>
                       <div style={{ fontFamily: PF, fontSize: 22, fontWeight: 800, color }}>
                         {isPos ? "+" : ""}{bal.toLocaleString("fr-FR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €
                       </div>
-                      <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)", marginTop: 2 }}>
+                      <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.6)", marginTop: 2 }}>
                         {isPos ? "doit recevoir" : isNeg ? "doit payer" : "équilibré ✓"}
                       </div>
                     </div>
@@ -1452,23 +1452,23 @@ function ExpensesSection({ families, roomAssignments, expenses, setExpenses, cur
                 <div style={{ textAlign: "center", padding: 32, borderRadius: 16, background: "rgba(107,191,107,0.06)", border: "1px solid rgba(107,191,107,0.15)", fontFamily: F, fontSize: 14, color: "#6BBF6B" }}>✓ Tout le monde est à l'équilibre !</div>
               ) : (
                 <div>
-                  <h3 style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>💸 Virements à faire</h3>
+                  <h3 style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>💸 Virements à faire</h3>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {transactions.map((t, i) => {
                       const from = memberMap[t.from], to = memberMap[t.to];
                       if (!from || !to) return null;
                       return (
                         <div key={i} style={{ display: "flex", alignItems: "center", gap: 12, padding: "16px 20px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.03)" }}>
-                          <span style={{ fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", gap: 6 }}>
                             <span style={{ fontSize: 22 }}>{from.avatar}</span>
                             <span style={{ fontWeight: 600, color: "#EF4444" }}>{from.name}</span>
                           </span>
-                          <span style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>→</span>
+                          <span style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.6)" }}>→</span>
                           <div style={{ flex: 1, textAlign: "center" }}>
                             <div style={{ fontFamily: PF, fontSize: 22, fontWeight: 900, color: "#FFD166" }}>{fmtEur(t.amount)}</div>
                           </div>
-                          <span style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.3)" }}>→</span>
-                          <span style={{ fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.7)", display: "flex", alignItems: "center", gap: 6 }}>
+                          <span style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.6)" }}>→</span>
+                          <span style={{ fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.9)", display: "flex", alignItems: "center", gap: 6 }}>
                             <span style={{ fontWeight: 600, color: "#6BBF6B" }}>{to.name}</span>
                             <span style={{ fontSize: 22 }}>{to.avatar}</span>
                           </span>
@@ -1506,7 +1506,7 @@ function RulesSection() {
         {rules.map((r, i) => (
           <div key={i} style={{ padding: "18px 20px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.13)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}><span style={{ fontSize: 24 }}>{r.icon}</span><h4 style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#FFD166", margin: 0 }}>{r.title}</h4></div>
-            <p style={{ fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.5)", margin: 0, lineHeight: 1.5 }}>{r.text}</p>
+            <p style={{ fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.8)", margin: 0, lineHeight: 1.5 }}>{r.text}</p>
           </div>
         ))}
       </div>
@@ -1529,21 +1529,21 @@ function BudgetSection({ families, totalCost, setTotalCost, roomAssignments }) {
         {editingCost ? (
           <div style={{ display: "inline-flex", gap: 10, alignItems: "center" }}>
             <input type="number" value={tempCost} onChange={e => setTempCost(e.target.value)} style={{ ...inputStyle, width: 140, fontSize: 22, textAlign: "center" }} />
-            <span style={{ color: "rgba(255,255,255,0.5)", fontSize: 22 }}>€</span>
+            <span style={{ color: "rgba(255,255,255,0.8)", fontSize: 22 }}>€</span>
             <button onClick={() => { const v = Number(tempCost); if (v > 0) { setTotalCost(v); saveData("bonheur-totalCost", v); } setEditingCost(false); }} style={{ padding: "10px 20px", borderRadius: 12, border: "none", cursor: "pointer", background: "#FFD166", color: "#0F141E", fontWeight: 700, fontFamily: F }}>✓</button>
-            <button onClick={() => setEditingCost(false)} style={{ padding: "10px 14px", borderRadius: 12, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.4)", fontFamily: F }}>✕</button>
+            <button onClick={() => setEditingCost(false)} style={{ padding: "10px 14px", borderRadius: 12, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.13)", color: "rgba(255,255,255,0.7)", fontFamily: F }}>✕</button>
           </div>
         ) : (
           <div>
             <div style={{ fontFamily: PF, fontSize: 64, fontWeight: 900, color: "#FFD166", lineHeight: 1 }}>{totalCost.toLocaleString("fr-FR")} €</div>
-            <div style={{ fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.4)", marginTop: 6, marginBottom: 14 }}>Coût total du gîte · {families.length} famille{families.length > 1 ? "s" : ""}</div>
-            <button onClick={() => { setTempCost(String(totalCost)); setEditingCost(true); }} style={{ padding: "8px 20px", borderRadius: 20, border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 12 }}>✏️ Modifier le montant</button>
+            <div style={{ fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.7)", marginTop: 6, marginBottom: 14 }}>Coût total du gîte · {families.length} famille{families.length > 1 ? "s" : ""}</div>
+            <button onClick={() => { setTempCost(String(totalCost)); setEditingCost(true); }} style={{ padding: "8px 20px", borderRadius: 20, border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", background: "rgba(255,255,255,0.04)", color: "rgba(255,255,255,0.7)", fontFamily: F, fontSize: 12 }}>✏️ Modifier le montant</button>
           </div>
         )}
       </div>
 
       {families.length === 0 ? (
-        <div style={{ textAlign: "center", padding: 40, color: "rgba(255,255,255,0.3)", fontFamily: F }}>Aucune famille enregistrée. Ajoute des familles dans l'onglet Profils.</div>
+        <div style={{ textAlign: "center", padding: 40, color: "rgba(255,255,255,0.6)", fontFamily: F }}>Aucune famille enregistrée. Ajoute des familles dans l'onglet Profils.</div>
       ) : (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 16, marginBottom: 20 }}>
@@ -1556,16 +1556,16 @@ function BudgetSection({ families, totalCost, setTotalCost, roomAssignments }) {
                 <div style={{ fontFamily: PF, fontSize: 42, fontWeight: 900, color: "white", lineHeight: 1, marginBottom: 6 }}>
                   {f.share.toLocaleString("fr-FR")} €
                 </div>
-                <div style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.4)", marginBottom: 8 }}>
+                <div style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.7)", marginBottom: 8 }}>
                   {f.nights} nuit{f.nights > 1 ? "s" : ""} · {families.length > 0 ? Math.round(f.share / totalCost * 100) : 0}% du total
                 </div>
-                <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.25)", padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.04)" }}>
+                <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.5)", padding: "6px 10px", borderRadius: 8, background: "rgba(255,255,255,0.04)" }}>
                   📅 {fmtDate(f.checkIn || "2026-07-11")} → {fmtDate(f.checkOut || "2026-07-25")}
                 </div>
               </div>
             ))}
           </div>
-          <div style={{ padding: "16px 20px", borderRadius: 16, background: "rgba(255,200,60,0.06)", border: "1px solid rgba(255,200,60,0.15)", fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.5)", textAlign: "center" }}>
+          <div style={{ padding: "16px 20px", borderRadius: 16, background: "rgba(255,200,60,0.06)", border: "1px solid rgba(255,200,60,0.15)", fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.8)", textAlign: "center" }}>
             💡 La part de chaque famille est <strong style={{ color: "#FFD166" }}>proportionnelle à son nombre de nuits</strong>. Si une famille arrive ou repart plus tôt, sa part s'ajuste automatiquement.
           </div>
         </>
@@ -1632,7 +1632,7 @@ export default function App() {
                 <div key={i} style={{ textAlign: "center", padding: "24px 16px", borderRadius: 20, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.13)" }}>
                   <span style={{ fontSize: 32 }}>{s.icon}</span>
                   <div style={{ fontFamily: PF, fontSize: 32, fontWeight: 900, color: "#FFD166", margin: "8px 0 2px" }}>{s.stat}</div>
-                  <div style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.35)", textTransform: "uppercase", letterSpacing: 1 }}>{s.label}</div>
+                  <div style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.65)", textTransform: "uppercase", letterSpacing: 1 }}>{s.label}</div>
                 </div>
               ))}
             </div>
@@ -1641,7 +1641,7 @@ export default function App() {
             <div style={{ padding: 32, borderRadius: 24, background: "linear-gradient(135deg, rgba(45,106,79,0.12), rgba(45,106,79,0.04))", border: "1px solid rgba(45,106,79,0.2)", textAlign: "center" }}>
               <span style={{ fontSize: 48 }}>🌿</span>
               <h3 style={{ fontFamily: PF, fontSize: 24, color: "#6BBF6B", margin: "12px 0 8px" }}>Le Gîte de Nougerède</h3>
-              <p style={{ fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.5)", maxWidth: 600, margin: "0 auto 16px", lineHeight: 1.7 }}>Ancienne ferme charentaise, grande piscine, terrasse, barbecue, trampoline, ping-pong, Mölkky... Ferme bio et brasserie artisanale sur place !</p>
+              <p style={{ fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.8)", maxWidth: 600, margin: "0 auto 16px", lineHeight: 1.7 }}>Ancienne ferme charentaise, grande piscine, terrasse, barbecue, trampoline, ping-pong, Mölkky... Ferme bio et brasserie artisanale sur place !</p>
               <a href="https://www.gite-nougerede.com/" target="_blank" rel="noreferrer" style={{ display: "inline-block", padding: "10px 24px", borderRadius: 30, background: "rgba(107,191,107,0.15)", border: "1px solid rgba(107,191,107,0.3)", color: "#6BBF6B", textDecoration: "none", fontWeight: 600, fontSize: 13, fontFamily: F }}>🔗 Voir le site du gîte</a>
             </div>
           </div>
@@ -1658,8 +1658,8 @@ export default function App() {
       {active === "rules" && <RulesSection />}
       <footer style={{ padding: "40px 20px", textAlign: "center", background: "rgba(0,0,0,0.3)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <p style={{ fontFamily: PF, fontSize: 24, color: "#FFD166", margin: "0 0 8px" }}>🏡 La Maison du Bonheur 2026</p>
-        <p style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.25)", margin: 0 }}>Gîte de Nougerède &bull; Salles-Lavalette &bull; Charente</p>
-        <p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.15)", marginTop: 16 }}>Fait avec amour pour les meilleurs potes du monde ❤️</p>
+        <p style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.5)", margin: 0 }}>Gîte de Nougerède &bull; Salles-Lavalette &bull; Charente</p>
+        <p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 16 }}>Fait avec amour pour les meilleurs potes du monde ❤️</p>
       </footer>
     </div>
   );
