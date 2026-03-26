@@ -251,6 +251,7 @@ function Nav({ active, setActive }) {
     { id: "planning", icon: "📅", label: "Planning" },
     { id: "cooking", icon: "👨‍🍳", label: "Cuisine" },
     { id: "activities", icon: "🎯", label: "Activités" },
+    { id: "courses", icon: "🛒", label: "Courses" },
     { id: "profiles", icon: "👥", label: "Profils" },
     { id: "rules", icon: "📜", label: "Règles d'or" },
   ];
@@ -504,10 +505,12 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
   );
 }
 
-function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, currentUser }) {
+function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, currentUser, meals, setMeals }) {
   const [selectedDay, setSelectedDay] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [np, setNp] = useState({ text: "", slot: "pm" });
+  const [editingMeal, setEditingMeal] = useState(null); // "lunch" | "dinner" | null
+  const [mealDraft, setMealDraft] = useState("");
   const adults = families.flatMap(f => f.members.filter(m => m.role === "adult").map(m => ({ ...m, familyColor: f.color })));
   const dayKey = DATES[selectedDay]?.key;
 
@@ -533,6 +536,17 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
   };
   const dayProps = proposals.filter(p => p.dayKey === dayKey);
   const slots = [{ key: "am", label: "Matin", icon: "🌅", color: "#FFD166" }, { key: "pm", label: "Après-midi", icon: "☀️", color: "#FF8C42" }, { key: "eve", label: "Soirée", icon: "🌙", color: "#A78BFA" }].filter(s => DEFAULT_PLANNING[selectedDay]?.[s.key]);
+
+  const dayMeals = meals[dayKey] || { lunch: "", dinner: "" };
+  const startEditMeal = (type) => { setEditingMeal(type); setMealDraft(dayMeals[type] || ""); };
+  const saveMeal = (type) => {
+    const next = { ...meals, [dayKey]: { ...dayMeals, [type]: mealDraft.trim() } };
+    setMeals(next); saveData("bonheur-meals", next); setEditingMeal(null);
+  };
+  const clearMeal = (type) => {
+    const next = { ...meals, [dayKey]: { ...dayMeals, [type]: "" } };
+    setMeals(next); saveData("bonheur-meals", next);
+  };
 
   const nameMap = {};
   families.forEach(f => f.members.forEach(m => { nameMap[m.id] = m.name; }));
@@ -583,6 +597,41 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
             </div>
           );
         })}
+
+        {/* Repas du jour */}
+        <div style={{ marginTop: 20, padding: "18px 20px", borderRadius: 18, background: "rgba(107,191,107,0.05)", border: "1px solid rgba(107,191,107,0.15)" }}>
+          <h4 style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#6BBF6B", marginBottom: 14, textTransform: "uppercase", letterSpacing: 1 }}>🍽️ Menu du jour</h4>
+          {[{ key: "lunch", label: "Déjeuner", icon: "🥗" }, { key: "dinner", label: "Dîner", icon: "🌙" }].map(({ key, label, icon }) => (
+            <div key={key} style={{ marginBottom: 10 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 16, width: 22, flexShrink: 0 }}>{icon}</span>
+                <span style={{ fontFamily: F, fontSize: 11, fontWeight: 700, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", letterSpacing: 1, minWidth: 62 }}>{label}</span>
+                {editingMeal === key ? (
+                  <div style={{ flex: 1, display: "flex", gap: 6 }}>
+                    <input
+                      autoFocus
+                      value={mealDraft}
+                      onChange={e => setMealDraft(e.target.value)}
+                      onKeyDown={e => { if (e.key === "Enter") saveMeal(key); if (e.key === "Escape") setEditingMeal(null); }}
+                      placeholder="Ex: Salade tomates, coquillettes jambon..."
+                      style={{ flex: 1, padding: "6px 12px", borderRadius: 10, border: "1px solid rgba(107,191,107,0.4)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 13, fontFamily: F, outline: "none" }}
+                    />
+                    <button onClick={() => saveMeal(key)} style={{ padding: "6px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: "#6BBF6B", color: "white", fontWeight: 700, fontSize: 12, fontFamily: F }}>✓</button>
+                    <button onClick={() => setEditingMeal(null)} style={{ padding: "6px 10px", borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontSize: 12, fontFamily: F }}>✕</button>
+                  </div>
+                ) : dayMeals[key] ? (
+                  <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8 }}>
+                    <span style={{ flex: 1, fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.85)" }}>{dayMeals[key]}</span>
+                    <button onClick={() => startEditMeal(key)} style={{ padding: "4px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: F }}>✏️</button>
+                    <button onClick={() => clearMeal(key)} style={{ padding: "4px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.1)", color: "#EF4444", fontSize: 11, fontFamily: F }}>✕</button>
+                  </div>
+                ) : (
+                  <button onClick={() => startEditMeal(key)} style={{ flex: 1, textAlign: "left", padding: "6px 14px", borderRadius: 10, border: "1px dashed rgba(107,191,107,0.25)", background: "transparent", color: "rgba(107,191,107,0.5)", cursor: "pointer", fontFamily: F, fontSize: 12 }}>+ Ajouter un repas…</button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
 
         {dayProps.length > 0 && (
           <div style={{ marginTop: 16 }}>
@@ -871,6 +920,129 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
   );
 }
 
+function ShoppingSection({ meals, shoppingItems, setShoppingItems, currentUser, families }) {
+  const [newItem, setNewItem] = useState("");
+  const [filter, setFilter] = useState("all"); // "all" | "pending" | "done"
+
+  const nameMap = {};
+  families.forEach(f => f.members.forEach(m => { nameMap[m.id] = { name: m.name, avatar: m.avatar, color: f.color }; }));
+
+  // Build meal-derived items list (read-only suggestions from planning)
+  const mealSuggestions = DATES.flatMap(d => {
+    const dm = meals[d.key] || {};
+    const rows = [];
+    if (dm.lunch) rows.push({ dateKey: d.key, dateLabel: `${d.day} ${d.num} juil.`, type: "lunch", typeLabel: "Déjeuner", text: dm.lunch });
+    if (dm.dinner) rows.push({ dateKey: d.key, dateLabel: `${d.day} ${d.num} juil.`, type: "dinner", typeLabel: "Dîner", text: dm.dinner });
+    return rows;
+  });
+
+  const toggleItem = (id) => {
+    const next = shoppingItems.map(it => it.id === id ? { ...it, checked: !it.checked, checkedBy: !it.checked ? (currentUser || "Anonyme") : null } : it);
+    setShoppingItems(next); saveData("bonheur-shopping", next);
+  };
+
+  const deleteItem = (id) => {
+    const next = shoppingItems.filter(it => it.id !== id);
+    setShoppingItems(next); saveData("bonheur-shopping", next);
+  };
+
+  const addItem = () => {
+    if (!newItem.trim()) return;
+    const next = [...shoppingItems, { id: `si-${Date.now()}`, text: newItem.trim(), checked: false, checkedBy: null, addedBy: currentUser || "Anonyme", category: "misc" }];
+    setShoppingItems(next); saveData("bonheur-shopping", next); setNewItem("");
+  };
+
+  const clearDone = () => {
+    const next = shoppingItems.filter(it => !it.checked);
+    setShoppingItems(next); saveData("bonheur-shopping", next);
+  };
+
+  const displayed = filter === "pending" ? shoppingItems.filter(i => !i.checked) : filter === "done" ? shoppingItems.filter(i => i.checked) : shoppingItems;
+  const doneCount = shoppingItems.filter(i => i.checked).length;
+
+  return (
+    <div style={{ padding: "0 20px 60px", maxWidth: 920, margin: "0 auto" }}>
+      <SectionTitle icon="🛒" title="Liste de Courses" subtitle="Planifie les repas → génère la liste → coche au fur et à mesure !" />
+
+      {/* Menu planifié → idées courses */}
+      {mealSuggestions.length > 0 && (
+        <div style={{ marginBottom: 32, padding: 24, borderRadius: 20, background: "rgba(107,191,107,0.05)", border: "1px solid rgba(107,191,107,0.15)" }}>
+          <h3 style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "#6BBF6B", margin: "0 0 16px", textTransform: "uppercase", letterSpacing: 1 }}>🍽️ Repas planifiés</h3>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 8 }}>
+            {mealSuggestions.map((s, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 10, padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <span style={{ fontSize: 14, marginTop: 1 }}>{s.type === "lunch" ? "🥗" : "🌙"}</span>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)", marginBottom: 2, textTransform: "capitalize" }}>{s.dateLabel} · {s.typeLabel}</div>
+                  <div style={{ fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.8)", lineHeight: 1.4 }}>{s.text}</div>
+                </div>
+                <button onClick={() => {
+                  const next = [...shoppingItems, { id: `si-${Date.now()}`, text: `[${s.typeLabel} ${s.dateLabel}] ${s.text}`, checked: false, checkedBy: null, addedBy: currentUser || "Anonyme", category: "meal" }];
+                  setShoppingItems(next); saveData("bonheur-shopping", next);
+                }} title="Ajouter à la liste" style={{ padding: "4px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(107,191,107,0.15)", color: "#6BBF6B", fontSize: 12, flexShrink: 0 }}>+ Liste</button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Ajouter un item manuel */}
+      <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
+        <input
+          value={newItem}
+          onChange={e => setNewItem(e.target.value)}
+          onKeyDown={e => e.key === "Enter" && addItem()}
+          placeholder="Ajouter un article (ex: huile d'olive, feta, rosé…)"
+          style={{ flex: 1, padding: "14px 18px", borderRadius: 16, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 14, fontFamily: F, outline: "none" }}
+        />
+        <button onClick={addItem} style={{ padding: "14px 24px", borderRadius: 16, border: "none", cursor: "pointer", background: "linear-gradient(135deg,#FFD166,#FF8C42)", color: "#0F141E", fontWeight: 700, fontSize: 15, fontFamily: F }}>+</button>
+      </div>
+
+      {/* Filtres + stats */}
+      {shoppingItems.length > 0 && (
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
+          {[["all", "Tout", shoppingItems.length], ["pending", "À acheter", shoppingItems.length - doneCount], ["done", "Cochés", doneCount]].map(([id, label, count]) => (
+            <button key={id} onClick={() => setFilter(id)} style={{ padding: "7px 16px", borderRadius: 24, border: "none", cursor: "pointer", background: filter === id ? "rgba(255,200,60,0.15)" : "rgba(255,255,255,0.04)", color: filter === id ? "#FFD166" : "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 12, fontWeight: 600 }}>{label} <span style={{ opacity: 0.6 }}>({count})</span></button>
+          ))}
+          {doneCount > 0 && (
+            <button onClick={clearDone} style={{ marginLeft: "auto", padding: "7px 14px", borderRadius: 24, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.1)", color: "#EF4444", fontFamily: F, fontSize: 12, fontWeight: 600 }}>🗑 Supprimer cochés</button>
+          )}
+        </div>
+      )}
+
+      {/* Liste */}
+      {displayed.length === 0 ? (
+        <div style={{ textAlign: "center", padding: 48, color: "rgba(255,255,255,0.25)", fontFamily: F }}>
+          <div style={{ fontSize: 48, marginBottom: 12 }}>🛒</div>
+          <div>{shoppingItems.length === 0 ? "Commence par planifier des repas dans le Planning, puis ajoute des articles !" : "Rien à afficher dans ce filtre."}</div>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {displayed.map(item => {
+            const adder = nameMap[item.addedBy];
+            const checker = item.checkedBy ? nameMap[item.checkedBy] : null;
+            return (
+              <div key={item.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "14px 18px", borderRadius: 14, background: item.checked ? "rgba(107,191,107,0.05)" : "rgba(255,255,255,0.03)", border: `1px solid ${item.checked ? "rgba(107,191,107,0.2)" : "rgba(255,255,255,0.06)"}`, transition: "all 0.2s" }}>
+                <button onClick={() => toggleItem(item.id)} style={{ width: 26, height: 26, borderRadius: 8, border: `2px solid ${item.checked ? "#6BBF6B" : "rgba(255,255,255,0.2)"}`, background: item.checked ? "#6BBF6B" : "transparent", cursor: "pointer", color: "white", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                  {item.checked ? "✓" : ""}
+                </button>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontFamily: F, fontSize: 14, color: item.checked ? "rgba(255,255,255,0.35)" : "rgba(255,255,255,0.85)", textDecoration: item.checked ? "line-through" : "none", lineHeight: 1.4 }}>{item.text}</div>
+                  <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.25)", marginTop: 2 }}>
+                    Ajouté par {adder ? `${adder.avatar} ${adder.name}` : item.addedBy}
+                    {item.checked && checker && ` · Coché par ${checker.avatar} ${checker.name}`}
+                  </div>
+                </div>
+                <button onClick={() => deleteItem(item.id)} style={{ padding: "5px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.1)", color: "rgba(239,68,68,0.6)", fontSize: 12, flexShrink: 0 }}>✕</button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 function RulesSection() {
   const rules = [
     { icon: "🤝", title: "Vivre ensemble", text: "On partage tout : cuisine, ménage, bonne humeur. Pas de passager clandestin du frigo." },
@@ -966,6 +1138,8 @@ export default function App() {
   const [totalCost, setTotalCost] = useState(4560);
   const [rsvps, setRsvps] = useState({});
   const [proposals, setProposals] = useState([]);
+  const [meals, setMeals] = useState({});
+  const [shoppingItems, setShoppingItems] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -978,6 +1152,8 @@ export default function App() {
       const tc = await loadData("bonheur-totalCost", 4560); setTotalCost(tc);
       setRsvps(await loadData("bonheur-rsvps", {}));
       setProposals(await loadData("bonheur-proposals", []));
+      setMeals(await loadData("bonheur-meals", {}));
+      setShoppingItems(await loadData("bonheur-shopping", []));
       const u = await loadData("bonheur-currentUser", null); if (u) setCurrentUser(u);
       setLoaded(true);
     })();
@@ -1028,9 +1204,10 @@ export default function App() {
       )}
       {active === "rooms" && <RoomsSection families={families} setFamilies={setFamilies} roomAssignments={roomAssignments} setRoomAssignments={setRoomAssignments} />}
       {active === "budget" && <BudgetSection families={families} totalCost={totalCost} setTotalCost={setTotalCost} roomAssignments={roomAssignments} />}
-      {active === "planning" && <PlanningSection families={families} rsvps={rsvps} setRsvps={setRsvps} proposals={proposals} setProposals={setProposals} currentUser={currentUser} />}
+      {active === "planning" && <PlanningSection families={families} rsvps={rsvps} setRsvps={setRsvps} proposals={proposals} setProposals={setProposals} currentUser={currentUser} meals={meals} setMeals={setMeals} />}
       {active === "cooking" && <CookingSection families={families} />}
       {active === "activities" && <ActivitiesSection />}
+      {active === "courses" && <ShoppingSection meals={meals} shoppingItems={shoppingItems} setShoppingItems={setShoppingItems} currentUser={currentUser} families={families} />}
       {active === "profiles" && <ProfilesSection families={families} setFamilies={setFamilies} currentUser={currentUser} setCurrentUser={setCurrentUser} roomAssignments={roomAssignments} />}
       {active === "rules" && <RulesSection />}
       <footer style={{ padding: "40px 20px", textAlign: "center", background: "rgba(0,0,0,0.3)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
