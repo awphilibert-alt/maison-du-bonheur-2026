@@ -1656,10 +1656,8 @@ export default function App() {
       {active === "expenses" && <ExpensesSection families={families} roomAssignments={roomAssignments} expenses={expenses} setExpenses={setExpenses} currentUser={currentUser} />}
       {active === "profiles" && <ProfilesSection families={families} setFamilies={setFamilies} currentUser={currentUser} setCurrentUser={setCurrentUser} roomAssignments={roomAssignments} />}
       {active === "rules" && <RulesSection />}
-      <footer style={{ padding: "40px 20px", textAlign: "center", background: "rgba(0,0,0,0.3)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
-        <p style={{ fontFamily: PF, fontSize: 24, color: "#FFD166", margin: "0 0 8px" }}>🏡 La Maison du Bonheur 2026</p>
-        <p style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.5)", margin: 0 }}>Gîte de Nougerède &bull; Salles-Lavalette &bull; Charente</p>
-        <p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)", marginTop: 16 }}>Fait avec amour pour les meilleurs potes du monde ❤️</p>
+      <footer style={{ padding: "10px 20px", textAlign: "center", background: "#0A1628" }}>
+        <p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)", margin: 0 }}>🏡 La Maison du Bonheur 2026 &bull; Gîte de Nougerède, Salles-Lavalette</p>
       </footer>
     </div>
   );
