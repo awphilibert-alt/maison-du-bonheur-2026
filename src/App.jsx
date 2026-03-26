@@ -342,7 +342,7 @@ function Hero({ families }) {
     tick(); const id = setInterval(tick, 1000); return () => clearInterval(id);
   }, []);
   return (
-    <div style={{ position: "relative", minHeight: "92vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", background: "linear-gradient(170deg, #0A1628 0%, #162544 40%, #1B3A5C 70%, #2D6A4F 100%)", overflow: "hidden", padding: "40px 20px", textAlign: "center" }}>
+    <div style={{ position: "relative", minHeight: "92vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", overflow: "hidden", padding: "40px 20px", textAlign: "center" }}>
       {Array.from({ length: 50 }).map((_, i) => (<div key={i} style={{ position: "absolute", left: `${Math.random()*100}%`, top: `${Math.random()*70}%`, width: Math.random()*3+1, height: Math.random()*3+1, borderRadius: "50%", background: "white", opacity: Math.random()*0.7+0.2, animation: `twinkle ${2+Math.random()*3}s ease-in-out infinite`, animationDelay: `${Math.random()*3}s` }} />))}
       <div style={{ position: "relative", zIndex: 2, maxWidth: 700 }}>
         <div style={{ fontSize: 72, marginBottom: 8, filter: "drop-shadow(0 0 30px rgba(255,200,60,0.4))" }}>🏡</div>
@@ -1605,13 +1605,13 @@ export default function App() {
   }, []);
 
   if (!loaded) return (
-    <div style={{ minHeight: "100vh", background: "#0F141E", display: "flex", alignItems: "center", justifyContent: "center" }}>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(170deg, #0A1628 0%, #162544 40%, #1B3A5C 70%, #2D6A4F 100%)", backgroundAttachment: "fixed", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ textAlign: "center" }}><div style={{ fontSize: 64, marginBottom: 16 }}>🏡</div><div style={{ fontFamily: PF, fontSize: 24, color: "#FFD166" }}>Chargement...</div></div>
     </div>
   );
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0F141E", color: "white" }}>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(170deg, #0A1628 0%, #162544 40%, #1B3A5C 70%, #2D6A4F 100%)", backgroundAttachment: "fixed", color: "white" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;800;900&family=DM+Sans:wght@300;400;500;600;700;800&display=swap');
         @keyframes twinkle { 0%, 100% { opacity: 0.2; } 50% { opacity: 0.9; } }
