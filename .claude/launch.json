@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "maison-du-bonheur",
+      "runtimeExecutable": "/Users/alexandraphilibert/.nvm/versions/node/v24.13.0/bin/node",
+      "runtimeArgs": ["/Users/alexandraphilibert/repositories/maison-du-bonheur/node_modules/.bin/vite"],
+      "port": 5173
+    }
+  ]
+}
