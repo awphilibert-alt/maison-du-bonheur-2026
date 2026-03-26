@@ -1657,7 +1657,7 @@ export default function App() {
       {active === "profiles" && <ProfilesSection families={families} setFamilies={setFamilies} currentUser={currentUser} setCurrentUser={setCurrentUser} roomAssignments={roomAssignments} />}
       {active === "rules" && <RulesSection />}
       <footer style={{ padding: "10px 20px", textAlign: "center", background: "#0A1628" }}>
-        <p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)", margin: 0 }}>2026© Fait par Aka, pour les meilleurs potes du monde ❤️</p>
+        <p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)", margin: 0 }}>2026© Fait par Aka, pour les meilleur·e·s potes du monde ❤️</p>
       </footer>
     </div>
   );
