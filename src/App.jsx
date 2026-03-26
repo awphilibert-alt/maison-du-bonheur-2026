@@ -18,7 +18,6 @@ const DEFAULT_FAMILIES = [
       { id: "nacim", name: "Nacim", role: "adult", avatar: "👨", diet: "", activities: ["Canoë", "Pétanque", "BBQ"], bio: "" },
       { id: "priam", name: "Priam", role: "child", age: 4, avatar: "👦", diet: "", activities: ["Piscine", "Trampoline", "Dessin"], bio: "" },
     ],
-    room: "Chambre 4",
   },
   {
     id: "schmidt-privey",
@@ -33,7 +32,6 @@ const DEFAULT_FAMILIES = [
       { id: "paul", name: "Paul", role: "child", age: 11, avatar: "🧒", diet: "", activities: ["Foot", "Piscine", "Jeux vidéo"], bio: "" },
       { id: "lucas", name: "Lucas", role: "child", age: 9, avatar: "👦", diet: "", activities: ["Ping-pong", "Piscine", "Mölkky"], bio: "" },
     ],
-    room: "Chambre 3",
   },
   {
     id: "louison-lutyens",
@@ -48,7 +46,6 @@ const DEFAULT_FAMILIES = [
       { id: "wael", name: "Wael", role: "child", age: 8, avatar: "🧒", diet: "", activities: ["Accrobranche", "Piscine", "Foot"], bio: "" },
       { id: "aden", name: "Aden", role: "child", age: 4, avatar: "👶", diet: "", activities: ["Piscine", "Trampoline", "Dessin"], bio: "" },
     ],
-    room: "Chambre 1",
   },
 ];
 
@@ -59,6 +56,15 @@ const ROOMS_LIST = [
   { name: "Chambre 6 — Le Dortoir", level: "Étage", icon: "⭐", beds: ["3 lits simples 90", "1 lit d'appoint 90"] },
   { name: "Chambre 2", level: "Étage", icon: "🏔️", beds: ["1 lit double 140", "2 lits simples 90", "1 appoint 90"], sug: "Idéale pour une famille avec 2-3 enfants" },
   { name: "Chambre 5", level: "Étage", icon: "🌅", beds: ["1 lit double 140"], sug: "Parfaite pour un couple" },
+];
+
+// Affectations par défaut : qui dort dans quelle chambre, quelles dates
+const DEFAULT_ROOM_ASSIGNMENTS = [
+  { id: "dra-1", familyId: "philibert-rahal",  roomName: "Chambre 4",            memberIds: ["alexandra", "nacim", "priam"],          checkIn: "2026-07-11", checkOut: "2026-07-25" },
+  { id: "dra-2", familyId: "schmidt-privey",   roomName: "Chambre 3",            memberIds: ["sarah-marine", "nicolas"],               checkIn: "2026-07-11", checkOut: "2026-07-25" },
+  { id: "dra-3", familyId: "schmidt-privey",   roomName: "Chambre 6 — Le Dortoir", memberIds: ["paul", "lucas"],                      checkIn: "2026-07-11", checkOut: "2026-07-25" },
+  { id: "dra-4", familyId: "louison-lutyens",  roomName: "Chambre 1",            memberIds: ["floriane", "sandro", "aden"],           checkIn: "2026-07-11", checkOut: "2026-07-25" },
+  { id: "dra-5", familyId: "louison-lutyens",  roomName: "Chambre 6 — Le Dortoir", memberIds: ["wael"],                               checkIn: "2026-07-11", checkOut: "2026-07-25" },
 ];
 
 const DATES = Array.from({ length: 14 }, (_, i) => {
@@ -122,17 +128,27 @@ function computeNights(checkIn, checkOut) {
   return Math.max(0, Math.round((b - a) / 86400000));
 }
 
-function computeShares(families, totalCost) {
-  const withNights = families.map(f => ({
-    ...f,
-    nights: computeNights(f.checkIn, f.checkOut),
-  }));
+// Calcule les dates effectives d'une famille à partir de ses affectations de chambre
+function getFamilyEffectiveDates(familyId, roomAssignments) {
+  const fas = roomAssignments.filter(ra => ra.familyId === familyId);
+  if (fas.length === 0) return { checkIn: "2026-07-11", checkOut: "2026-07-25" };
+  const checkIn = fas.reduce((min, ra) => ra.checkIn < min ? ra.checkIn : min, "9999-99-99");
+  const checkOut = fas.reduce((max, ra) => ra.checkOut > max ? ra.checkOut : max, "0000-00-00");
+  return { checkIn, checkOut };
+}
+
+function computeShares(families, totalCost, roomAssignments) {
+  const withNights = families.map(f => {
+    const { checkIn, checkOut } = roomAssignments
+      ? getFamilyEffectiveDates(f.id, roomAssignments)
+      : { checkIn: f.checkIn || "2026-07-11", checkOut: f.checkOut || "2026-07-25" };
+    return { ...f, checkIn, checkOut, nights: computeNights(checkIn, checkOut) };
+  });
   const totalNights = withNights.reduce((s, f) => s + f.nights, 0);
   if (totalNights === 0 || families.length === 0) {
     const eq = families.length > 0 ? Math.round(totalCost / families.length) : 0;
     return withNights.map(f => ({ ...f, share: eq }));
   }
-  // Round to whole euros, adjust last family for rounding errors
   let remaining = totalCost;
   return withNights.map((f, i) => {
     const share = i === withNights.length - 1 ? remaining : Math.round((f.nights / totalNights) * totalCost);
@@ -246,214 +262,263 @@ function SectionTitle({ icon, title, subtitle }) {
   );
 }
 
-function RoomsSection({ families, setFamilies }) {
+function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignments }) {
   const FAMILY_EMOJIS = ["🦁", "🐻", "🦊", "🐼", "🦅", "🦋", "🐬", "🐯", "🦉", "🦄", "🐸", "🐺", "🦓", "🦒", "🐙", "🦀"];
   const FAMILY_COLORS = ["#E8733A", "#4A90D9", "#6BBF6B", "#9B59B6", "#E74C3C", "#F39C12", "#1ABC9C", "#E91E63", "#00BCD4", "#FF5722"];
   const BLANK_MEMBER = { name: "", role: "adult", age: "" };
-  const BLANK_FORM = { name: "", emoji: "🦄", color: "#9B59B6", room: "", checkIn: "2026-07-11", checkOut: "2026-07-25", members: [{ ...BLANK_MEMBER }] };
+  const BLANK_FAM_FORM = { name: "", emoji: "🦄", color: "#9B59B6", members: [{ ...BLANK_MEMBER }] };
 
-  const [showForm, setShowForm] = useState(false);
-  const [editingDates, setEditingDates] = useState(null);
-  const [form, setForm] = useState(BLANK_FORM);
+  // State: formulaire d'affectation (par chambre)
+  const [assigningRoom, setAssigningRoom] = useState(null);
+  const [assignForm, setAssignForm] = useState({ familyId: "", memberIds: [], checkIn: "2026-07-11", checkOut: "2026-07-25" });
+  const [assignError, setAssignError] = useState("");
+  const [editingRA, setEditingRA] = useState(null);
   const [datesForm, setDatesForm] = useState({});
-
-  // A room is available for [checkIn, checkOut) if no existing family in that room overlaps
-  // Overlap: existing.checkIn < new.checkOut AND existing.checkOut > new.checkIn
-  // Same-day turnover (existing.checkOut === new.checkIn) is NOT an overlap
-  const hasOverlap = (fam, ci, co) => fam.checkIn < co && fam.checkOut > ci;
-
-  const availableRooms = ROOMS_LIST.filter(r =>
-    families.filter(f => f.room === r.name).every(f => !hasOverlap(f, form.checkIn, form.checkOut))
-  );
-
-  // When dates change, clear room if it's no longer available for the new dates
-  const handleDateChange = (field, value) => {
-    const updated = { ...form, [field]: value };
-    if (updated.room) {
-      const famsInRoom = families.filter(f => f.room === updated.room);
-      if (famsInRoom.some(f => hasOverlap(f, updated.checkIn, updated.checkOut))) updated.room = "";
-    }
-    setForm(updated);
-  };
-
-  const updateMember = (idx, field, value) => setForm(f => ({ ...f, members: f.members.map((m, i) => i === idx ? { ...m, [field]: value } : m) }));
-  const addMember = () => setForm(f => ({ ...f, members: [...f.members, { ...BLANK_MEMBER }] }));
-  const removeMember = (idx) => setForm(f => ({ ...f, members: f.members.filter((_, i) => i !== idx) }));
-
-  const canSubmit = form.name.trim() && form.room && form.members.some(m => m.name.trim());
-
-  const addFamily = () => {
-    if (!canSubmit) return;
-    const slug = form.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    const newFamily = {
-      id: `${slug}-${Date.now()}`,
-      name: form.name.trim(),
-      emoji: form.emoji,
-      color: form.color,
-      room: form.room,
-      checkIn: form.checkIn,
-      checkOut: form.checkOut,
-      members: form.members.filter(m => m.name.trim()).map((m, i) => ({
-        id: `${slug}-${i + 1}`,
-        name: m.name.trim(),
-        role: m.role,
-        ...(m.role === "child" && m.age ? { age: Number(m.age) } : {}),
-        avatar: m.role === "adult" ? "👤" : "🧒",
-        diet: "", activities: [], bio: "",
-      })),
-    };
-    const next = [...families, newFamily];
-    setFamilies(next); saveData("bonheur-families", next);
-    setShowForm(false); setForm(BLANK_FORM);
-  };
-
-  const saveDates = (fid) => {
-    const next = families.map(f => f.id !== fid ? f : { ...f, checkIn: datesForm.checkIn, checkOut: datesForm.checkOut });
-    setFamilies(next); saveData("bonheur-families", next); setEditingDates(null);
-  };
-
-  const removeFamily = (fid) => {
-    if (!window.confirm("Supprimer cette famille ?")) return;
-    const next = families.filter(f => f.id !== fid);
-    setFamilies(next); saveData("bonheur-families", next);
-  };
+  // State: créer une nouvelle famille
+  const [showAddFamily, setShowAddFamily] = useState(false);
+  const [famForm, setFamForm] = useState(BLANK_FAM_FORM);
 
   const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 13, fontFamily: F, outline: "none", boxSizing: "border-box" };
   const labelStyle = { fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 };
   const fmtDate = d => new Date(d + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 
+  // Chevauchement : overlap si checkIn A < checkOut B ET checkOut A > checkIn B
+  const hasOverlap = (a, b) => a.checkIn < b.checkOut && a.checkOut > b.checkIn;
+
+  const getRoomAssignments = (roomName) => roomAssignments.filter(ra => ra.roomName === roomName);
+
+  // Validation membres : enfants < 6 ans doivent être avec un adulte
+  const validateMembers = (familyId, memberIds) => {
+    const fam = families.find(f => f.id === familyId);
+    if (!fam || memberIds.length === 0) return "Sélectionne au moins un membre.";
+    const selected = fam.members.filter(m => memberIds.includes(m.id));
+    const hasAdult = selected.some(m => m.role === "adult");
+    const hasYoungChild = selected.some(m => m.role === "child" && (m.age == null || m.age < 6));
+    if (hasYoungChild && !hasAdult) return "Les enfants de moins de 6 ans doivent être accompagnés d'un adulte dans la même chambre.";
+    return null;
+  };
+
+  const openAssignForm = (roomName) => {
+    setAssigningRoom(roomName);
+    setAssignForm({ familyId: "", memberIds: [], checkIn: "2026-07-11", checkOut: "2026-07-25" });
+    setAssignError("");
+  };
+
+  const toggleMember = (mid) => setAssignForm(f => ({
+    ...f, memberIds: f.memberIds.includes(mid) ? f.memberIds.filter(id => id !== mid) : [...f.memberIds, mid]
+  }));
+
+  const submitAssignment = () => {
+    const err = validateMembers(assignForm.familyId, assignForm.memberIds);
+    if (err) { setAssignError(err); return; }
+    const existing = getRoomAssignments(assigningRoom);
+    if (existing.some(ra => hasOverlap(ra, assignForm))) { setAssignError("Cette chambre est déjà occupée pour ces dates."); return; }
+    const next = [...roomAssignments, { id: `ra-${Date.now()}`, familyId: assignForm.familyId, roomName: assigningRoom, memberIds: assignForm.memberIds, checkIn: assignForm.checkIn, checkOut: assignForm.checkOut }];
+    setRoomAssignments(next); saveData("bonheur-roomAssignments", next);
+    setAssigningRoom(null);
+  };
+
+  const deleteAssignment = (raId) => {
+    const next = roomAssignments.filter(ra => ra.id !== raId);
+    setRoomAssignments(next); saveData("bonheur-roomAssignments", next);
+  };
+
+  const saveDates = (raId) => {
+    const next = roomAssignments.map(ra => ra.id !== raId ? ra : { ...ra, ...datesForm });
+    setRoomAssignments(next); saveData("bonheur-roomAssignments", next); setEditingRA(null);
+  };
+
+  // Créer une nouvelle famille
+  const updateFamMember = (idx, field, val) => setFamForm(f => ({ ...f, members: f.members.map((m, i) => i === idx ? { ...m, [field]: val } : m) }));
+  const addFamMember = () => setFamForm(f => ({ ...f, members: [...f.members, { ...BLANK_MEMBER }] }));
+  const removeFamMember = (idx) => setFamForm(f => ({ ...f, members: f.members.filter((_, i) => i !== idx) }));
+  const canCreateFam = famForm.name.trim() && famForm.members.some(m => m.name.trim());
+
+  const createFamily = () => {
+    if (!canCreateFam) return;
+    const slug = famForm.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    const newFam = {
+      id: `${slug}-${Date.now()}`,
+      name: famForm.name.trim(), emoji: famForm.emoji, color: famForm.color,
+      members: famForm.members.filter(m => m.name.trim()).map((m, i) => ({
+        id: `${slug}-${i + 1}`, name: m.name.trim(), role: m.role,
+        ...(m.role === "child" && m.age ? { age: Number(m.age) } : {}),
+        avatar: m.role === "adult" ? "👤" : "🧒", diet: "", activities: [], bio: "",
+      })),
+    };
+    const next = [...families, newFam];
+    setFamilies(next); saveData("bonheur-families", next);
+    setShowAddFamily(false); setFamForm(BLANK_FAM_FORM);
+  };
+
+  const selectedFamily = families.find(f => f.id === assignForm.familyId);
+
   return (
     <div style={{ padding: "0 20px 40px", maxWidth: 920, margin: "0 auto" }}>
-      <SectionTitle icon="🛏️" title="Les Chambres" subtitle="Plusieurs familles peuvent partager une chambre à des dates différentes" />
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16, marginBottom: 20 }}>
-        {ROOMS_LIST.map((r, i) => {
-          const famsInRoom = families.filter(f => f.room === r.name);
-          const isFullyFree = famsInRoom.length === 0;
+      <SectionTitle icon="🛏️" title="Les Chambres" subtitle="Assigne les membres de chaque famille à leur chambre — avec dates et règles de partage" />
+
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 16, marginBottom: 28 }}>
+        {ROOMS_LIST.map((r) => {
+          const assignments = getRoomAssignments(r.name);
+          const isFree = assignments.length === 0;
+          const isOpen = assigningRoom === r.name;
           return (
-            <div key={i} style={{ background: isFullyFree ? "linear-gradient(135deg, rgba(45,106,79,0.15), rgba(45,106,79,0.05))" : "rgba(255,255,255,0.03)", border: `1px solid ${isFullyFree ? "rgba(45,106,79,0.3)" : "rgba(255,255,255,0.06)"}`, borderRadius: 20, padding: 24, position: "relative" }}>
-              {isFullyFree && <div style={{ position: "absolute", top: 12, right: 12, background: "#2D6A4F", color: "white", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 20, textTransform: "uppercase", letterSpacing: 1, fontFamily: F }}>Disponible</div>}
-              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-                <div style={{ width: 44, height: 44, borderRadius: 14, background: famsInRoom[0] ? `${famsInRoom[0].color}22` : "rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 22 }}>{r.icon}</div>
-                <div><h3 style={{ fontFamily: F, fontSize: 16, fontWeight: 700, color: "white", margin: 0 }}>{r.name}</h3><span style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)" }}>{r.level}</span></div>
+            <div key={r.name} style={{ background: isFree ? "linear-gradient(135deg,rgba(45,106,79,0.15),rgba(45,106,79,0.05))" : "rgba(255,255,255,0.03)", border: `1px solid ${isFree ? "rgba(45,106,79,0.3)" : "rgba(255,255,255,0.07)"}`, borderRadius: 20, padding: 20 }}>
+              {/* En-tête chambre */}
+              <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 10 }}>
+                <div style={{ width: 42, height: 42, borderRadius: 13, background: assignments[0] ? `${families.find(f=>f.id===assignments[0].familyId)?.color}22`:"rgba(255,255,255,0.06)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 21 }}>{r.icon}</div>
+                <div style={{ flex: 1 }}>
+                  <h3 style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "white", margin: 0 }}>{r.name}</h3>
+                  <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.35)" }}>{r.level}</span>
+                </div>
+                {isFree && <span style={{ background: "#2D6A4F", color: "white", fontSize: 9, fontWeight: 700, padding: "3px 8px", borderRadius: 20, textTransform: "uppercase", letterSpacing: 1, fontFamily: F }}>Libre</span>}
               </div>
-              <div style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.5)", marginBottom: famsInRoom.length ? 12 : 0, lineHeight: 1.6 }}>{r.beds.map((b, j) => <div key={j}>🛏️ {b}</div>)}</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {famsInRoom.map(fam => (
-                  <div key={fam.id} style={{ padding: "10px 14px", borderRadius: 12, background: `${fam.color}12`, border: `1px solid ${fam.color}25` }}>
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 2 }}>
-                      <div style={{ fontFamily: F, fontSize: 12, fontWeight: 600, color: fam.color }}>{fam.emoji} {fam.name}</div>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        <button onClick={() => { setEditingDates(fam.id); setDatesForm({ checkIn: fam.checkIn, checkOut: fam.checkOut }); }} style={{ padding: "3px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)", fontFamily: F, fontSize: 10 }}>📅</button>
-                        {!DEFAULT_FAMILIES.find(df => df.id === fam.id) && <button onClick={() => removeFamily(fam.id)} style={{ padding: "3px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#EF4444", fontFamily: F, fontSize: 10 }}>✕</button>}
-                      </div>
-                    </div>
-                    <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 4 }}>{fam.members.map(m => m.name).join(", ")}</div>
-                    {editingDates === fam.id ? (
-                      <div style={{ marginTop: 8 }}>
-                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
-                          <input type="date" value={datesForm.checkIn} min="2026-07-11" max="2026-07-24" onChange={e => setDatesForm(d => ({ ...d, checkIn: e.target.value }))} style={{ ...inputStyle, fontSize: 11, padding: "6px 8px" }} />
-                          <input type="date" value={datesForm.checkOut} min={datesForm.checkIn || "2026-07-12"} max="2026-07-25" onChange={e => setDatesForm(d => ({ ...d, checkOut: e.target.value }))} style={{ ...inputStyle, fontSize: 11, padding: "6px 8px" }} />
+              <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", marginBottom: 12, lineHeight: 1.6 }}>
+                {r.beds.map((b, j) => <div key={j}>🛏️ {b}</div>)}
+              </div>
+
+              {/* Affectations */}
+              {assignments.length > 0 && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8, marginBottom: 10 }}>
+                  {assignments.map(ra => {
+                    const fam = families.find(f => f.id === ra.familyId);
+                    if (!fam) return null;
+                    const members = fam.members.filter(m => ra.memberIds.includes(m.id));
+                    return (
+                      <div key={ra.id} style={{ padding: "10px 12px", borderRadius: 12, background: `${fam.color}12`, border: `1px solid ${fam.color}28` }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                          <span style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: fam.color }}>{fam.emoji} {fam.name}</span>
+                          <div style={{ display: "flex", gap: 4 }}>
+                            <button onClick={() => { setEditingRA(ra.id); setDatesForm({ checkIn: ra.checkIn, checkOut: ra.checkOut }); }} style={{ padding: "2px 7px", borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.08)", color: "rgba(255,255,255,0.4)", fontSize: 10 }}>📅</button>
+                            <button onClick={() => deleteAssignment(ra.id)} style={{ padding: "2px 7px", borderRadius: 7, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#EF4444", fontSize: 10 }}>✕</button>
+                          </div>
                         </div>
-                        <div style={{ display: "flex", gap: 6 }}>
-                          <button onClick={() => saveDates(fam.id)} style={{ padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer", background: fam.color, color: "white", fontWeight: 700, fontSize: 11, fontFamily: F }}>✓ OK</button>
-                          <button onClick={() => setEditingDates(null)} style={{ padding: "6px 10px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: F }}>Annuler</button>
+                        <div style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.5)", marginBottom: 4 }}>
+                          {members.map(m => `${m.avatar} ${m.name}${m.age != null ? ` (${m.age} ans)` : ""}`).join(" · ")}
                         </div>
+                        {editingRA === ra.id ? (
+                          <div>
+                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6, marginBottom: 6 }}>
+                              <input type="date" value={datesForm.checkIn} min="2026-07-11" max="2026-07-24" onChange={e => setDatesForm(d => ({ ...d, checkIn: e.target.value }))} style={{ ...inputStyle, fontSize: 11, padding: "6px 8px" }} />
+                              <input type="date" value={datesForm.checkOut} min={datesForm.checkIn||"2026-07-12"} max="2026-07-25" onChange={e => setDatesForm(d => ({ ...d, checkOut: e.target.value }))} style={{ ...inputStyle, fontSize: 11, padding: "6px 8px" }} />
+                            </div>
+                            <div style={{ display: "flex", gap: 6 }}>
+                              <button onClick={() => saveDates(ra.id)} style={{ padding: "5px 12px", borderRadius: 8, border: "none", cursor: "pointer", background: fam.color, color: "white", fontWeight: 700, fontSize: 11, fontFamily: F }}>✓ OK</button>
+                              <button onClick={() => setEditingRA(null)} style={{ padding: "5px 8px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontSize: 11, fontFamily: F }}>✕</button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>
+                            📅 {fmtDate(ra.checkIn)} → {fmtDate(ra.checkOut)} · {computeNights(ra.checkIn, ra.checkOut)} nuits
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>
-                        📅 {fmtDate(fam.checkIn)} → {fmtDate(fam.checkOut)} · {computeNights(fam.checkIn, fam.checkOut)} nuits
-                      </div>
-                    )}
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Bouton / formulaire d'affectation */}
+              {!isOpen ? (
+                <button onClick={() => openAssignForm(r.name)} style={{ width: "100%", padding: "8px", borderRadius: 10, border: "1px dashed rgba(255,255,255,0.15)", cursor: "pointer", background: "transparent", color: "rgba(255,255,255,0.35)", fontFamily: F, fontSize: 12 }}>
+                  + Affecter une famille
+                </button>
+              ) : (
+                <div style={{ padding: 14, borderRadius: 14, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
+                  <div style={{ marginBottom: 10 }}>
+                    <label style={labelStyle}>Famille</label>
+                    <select value={assignForm.familyId} onChange={e => setAssignForm(f => ({ ...f, familyId: e.target.value, memberIds: [] }))} style={{ ...inputStyle, fontSize: 12, padding: "8px 10px" }}>
+                      <option value="">— Choisir —</option>
+                      {families.map(fam => <option key={fam.id} value={fam.id}>{fam.emoji} {fam.name}</option>)}
+                    </select>
                   </div>
-                ))}
-              </div>
-              {isFullyFree && r.sug && <div style={{ fontFamily: F, fontSize: 11, color: "rgba(45,106,79,0.8)", fontStyle: "italic", marginTop: 8 }}>{r.sug}</div>}
+                  {selectedFamily && (
+                    <div style={{ marginBottom: 10 }}>
+                      <label style={labelStyle}>Membres dans cette chambre</label>
+                      {selectedFamily.members.map(m => {
+                        const isYoung = m.role === "child" && (m.age == null || m.age < 6);
+                        const checked = assignForm.memberIds.includes(m.id);
+                        return (
+                          <label key={m.id} style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", padding: "7px 10px", borderRadius: 9, marginBottom: 4, background: checked ? `${selectedFamily.color}20` : "rgba(255,255,255,0.03)", border: `1px solid ${checked ? selectedFamily.color+"40" : "rgba(255,255,255,0.06)"}` }}>
+                            <input type="checkbox" checked={checked} onChange={() => toggleMember(m.id)} style={{ accentColor: selectedFamily.color }} />
+                            <span style={{ fontFamily: F, fontSize: 12, color: "white", flex: 1 }}>{m.avatar} {m.name}</span>
+                            <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)" }}>
+                              {m.role === "adult" ? "adulte" : `${m.age != null ? m.age : "?"}ans${isYoung ? " 👨‍👩requis" : ""}`}
+                            </span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 10 }}>
+                    <div><label style={labelStyle}>Arrivée</label><input type="date" value={assignForm.checkIn} min="2026-07-11" max="2026-07-24" onChange={e => setAssignForm(f => ({ ...f, checkIn: e.target.value }))} style={{ ...inputStyle, fontSize: 11, padding: "7px 10px" }} /></div>
+                    <div><label style={labelStyle}>Départ</label><input type="date" value={assignForm.checkOut} min={assignForm.checkIn||"2026-07-12"} max="2026-07-25" onChange={e => setAssignForm(f => ({ ...f, checkOut: e.target.value }))} style={{ ...inputStyle, fontSize: 11, padding: "7px 10px" }} /></div>
+                  </div>
+                  {assignError && <div style={{ fontFamily: F, fontSize: 11, color: "#EF4444", marginBottom: 8 }}>⚠️ {assignError}</div>}
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button onClick={submitAssignment} disabled={!assignForm.familyId || assignForm.memberIds.length === 0} style={{ padding: "8px 16px", borderRadius: 10, border: "none", cursor: assignForm.familyId && assignForm.memberIds.length > 0 ? "pointer" : "default", background: assignForm.familyId && assignForm.memberIds.length > 0 ? "linear-gradient(135deg,#FFD166,#FF8C42)" : "rgba(255,255,255,0.08)", color: assignForm.familyId && assignForm.memberIds.length > 0 ? "#0F141E" : "rgba(255,255,255,0.3)", fontWeight: 700, fontSize: 12, fontFamily: F }}>✓ Affecter</button>
+                    <button onClick={() => setAssigningRoom(null)} style={{ padding: "8px 12px", borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontSize: 12, fontFamily: F }}>Annuler</button>
+                  </div>
+                </div>
+              )}
+              {isFree && r.sug && <div style={{ fontFamily: F, fontSize: 11, color: "rgba(45,106,79,0.7)", fontStyle: "italic", marginTop: 8 }}>{r.sug}</div>}
             </div>
           );
         })}
       </div>
 
-      <div style={{ textAlign: "center", marginBottom: 20 }}>
-        <button onClick={() => { setShowForm(!showForm); if (!showForm) setForm(BLANK_FORM); }} style={{ padding: "12px 28px", borderRadius: 30, border: "none", cursor: "pointer", background: showForm ? "rgba(255,255,255,0.06)" : "linear-gradient(135deg, #FFD166, #FF8C42)", color: showForm ? "rgba(255,255,255,0.5)" : "#0F141E", fontWeight: 700, fontSize: 14, fontFamily: F }}>
-          {showForm ? "✕ Annuler" : "➕ Ajouter une famille"}
-        </button>
-      </div>
-
-      {showForm && (
-        <div style={{ padding: 28, borderRadius: 24, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", marginBottom: 20 }}>
-          <h3 style={{ fontFamily: PF, fontSize: 20, color: "#FFD166", margin: "0 0 20px" }}>➕ Nouvelle famille</h3>
-
-          {/* Nom */}
-          <div style={{ marginBottom: 16 }}>
-            <label style={labelStyle}>Nom de la famille *</label>
-            <input value={form.name} onChange={e => setForm(d => ({ ...d, name: e.target.value }))} placeholder="Ex: Dupont" style={inputStyle} />
-          </div>
-
-          {/* Emoji + Couleur */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-            <div>
-              <label style={labelStyle}>Emoji famille</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                {FAMILY_EMOJIS.map(em => (<button key={em} onClick={() => setForm(d => ({ ...d, emoji: em }))} style={{ width: 36, height: 36, borderRadius: 9, border: form.emoji === em ? "2px solid #FFD166" : "2px solid transparent", cursor: "pointer", fontSize: 20, background: form.emoji === em ? "rgba(255,200,60,0.15)" : "rgba(255,255,255,0.06)" }}>{em}</button>))}
+      {/* Créer une nouvelle famille */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 24 }}>
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
+          <button onClick={() => { setShowAddFamily(!showAddFamily); setFamForm(BLANK_FAM_FORM); }} style={{ padding: "12px 28px", borderRadius: 30, border: "none", cursor: "pointer", background: showAddFamily ? "rgba(255,255,255,0.06)" : "linear-gradient(135deg,#FFD166,#FF8C42)", color: showAddFamily ? "rgba(255,255,255,0.5)" : "#0F141E", fontWeight: 700, fontSize: 14, fontFamily: F }}>
+            {showAddFamily ? "✕ Annuler" : "➕ Créer une nouvelle famille"}
+          </button>
+        </div>
+        {showAddFamily && (
+          <div style={{ padding: 28, borderRadius: 24, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", maxWidth: 600, margin: "0 auto" }}>
+            <h3 style={{ fontFamily: PF, fontSize: 20, color: "#FFD166", margin: "0 0 18px" }}>➕ Nouvelle famille</h3>
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Nom de la famille *</label>
+              <input value={famForm.name} onChange={e => setFamForm(d => ({ ...d, name: e.target.value }))} placeholder="Ex: Dupont" style={inputStyle} />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+              <div>
+                <label style={labelStyle}>Emoji</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                  {FAMILY_EMOJIS.map(em => (<button key={em} onClick={() => setFamForm(d => ({ ...d, emoji: em }))} style={{ width: 34, height: 34, borderRadius: 9, border: famForm.emoji === em ? "2px solid #FFD166" : "2px solid transparent", cursor: "pointer", fontSize: 19, background: famForm.emoji === em ? "rgba(255,200,60,0.15)" : "rgba(255,255,255,0.06)" }}>{em}</button>))}
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Couleur</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                  {FAMILY_COLORS.map(col => (<button key={col} onClick={() => setFamForm(d => ({ ...d, color: col }))} style={{ width: 28, height: 28, borderRadius: "50%", border: famForm.color === col ? "3px solid white" : "3px solid transparent", cursor: "pointer", background: col, outline: "none" }} />))}
+                </div>
               </div>
             </div>
-            <div>
-              <label style={labelStyle}>Couleur</label>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-                {FAMILY_COLORS.map(col => (<button key={col} onClick={() => setForm(d => ({ ...d, color: col }))} style={{ width: 30, height: 30, borderRadius: "50%", border: form.color === col ? "3px solid white" : "3px solid transparent", cursor: "pointer", background: col, outline: "none" }} />))}
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                <label style={{ ...labelStyle, margin: 0 }}>Membres *</label>
+                <button onClick={addFamMember} style={{ padding: "4px 12px", borderRadius: 20, border: "none", cursor: "pointer", background: "rgba(255,200,60,0.12)", color: "#FFD166", fontFamily: F, fontSize: 12, fontWeight: 600 }}>+ Ajouter</button>
               </div>
-            </div>
-          </div>
-
-          {/* Dates */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
-            <div><label style={labelStyle}>Arrivée</label><input type="date" value={form.checkIn} min="2026-07-11" max="2026-07-24" onChange={e => handleDateChange("checkIn", e.target.value)} style={inputStyle} /></div>
-            <div><label style={labelStyle}>Départ</label><input type="date" value={form.checkOut} min={form.checkIn || "2026-07-12"} max="2026-07-25" onChange={e => handleDateChange("checkOut", e.target.value)} style={inputStyle} /></div>
-          </div>
-
-          {/* Chambre — calculée selon les dates */}
-          <div style={{ marginBottom: 20 }}>
-            <label style={labelStyle}>Chambre * <span style={{ color: "rgba(255,255,255,0.25)" }}>(chambres disponibles pour ces dates)</span></label>
-            <select value={form.room} onChange={e => setForm(d => ({ ...d, room: e.target.value }))} style={{ ...inputStyle, cursor: "pointer" }}>
-              <option value="">— Choisir une chambre —</option>
-              {availableRooms.map(r => (<option key={r.name} value={r.name}>{r.name} ({r.level})</option>))}
-            </select>
-            {availableRooms.length === 0 && <div style={{ fontFamily: F, fontSize: 11, color: "#EF4444", marginTop: 6 }}>⚠️ Aucune chambre disponible pour ces dates. Essaie de changer les dates.</div>}
-          </div>
-
-          {/* Membres */}
-          <div style={{ marginBottom: 20 }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-              <label style={{ ...labelStyle, margin: 0 }}>Membres de la famille *</label>
-              <button onClick={addMember} style={{ padding: "5px 14px", borderRadius: 20, border: "none", cursor: "pointer", background: "rgba(255,200,60,0.12)", color: "#FFD166", fontFamily: F, fontSize: 12, fontWeight: 600 }}>+ Ajouter un membre</button>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {form.members.map((m, idx) => (
-                <div key={idx} style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: 8, alignItems: "center", padding: "10px 14px", borderRadius: 12, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                  <input value={m.name} onChange={e => updateMember(idx, "name", e.target.value)} placeholder={idx === 0 ? "Prénom (adulte référent)" : "Prénom"} style={{ ...inputStyle, padding: "8px 12px", fontSize: 12 }} />
-                  <select value={m.role} onChange={e => updateMember(idx, "role", e.target.value)} style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 12, fontFamily: F, cursor: "pointer", outline: "none" }}>
+              {famForm.members.map((m, idx) => (
+                <div key={idx} style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: 8, alignItems: "center", marginBottom: 6 }}>
+                  <input value={m.name} onChange={e => updateFamMember(idx, "name", e.target.value)} placeholder={idx === 0 ? "Prénom (référent)" : "Prénom"} style={{ ...inputStyle, padding: "8px 12px", fontSize: 12 }} />
+                  <select value={m.role} onChange={e => updateFamMember(idx, "role", e.target.value)} style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 12, fontFamily: F, cursor: "pointer", outline: "none" }}>
                     <option value="adult">Adulte</option>
                     <option value="child">Enfant</option>
                   </select>
-                  {m.role === "child"
-                    ? <input type="number" value={m.age} onChange={e => updateMember(idx, "age", e.target.value)} placeholder="Âge" min="0" max="17" style={{ ...inputStyle, width: 60, padding: "8px 10px", fontSize: 12, textAlign: "center" }} />
-                    : <div style={{ width: 60 }} />
-                  }
-                  {form.members.length > 1
-                    ? <button onClick={() => removeMember(idx)} style={{ padding: "6px 10px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#EF4444", fontSize: 12, fontFamily: F }}>✕</button>
-                    : <div style={{ width: 36 }} />
-                  }
+                  {m.role === "child" ? <input type="number" value={m.age} onChange={e => updateFamMember(idx, "age", e.target.value)} placeholder="Âge" min="0" max="17" style={{ ...inputStyle, width: 60, padding: "8px 8px", fontSize: 12, textAlign: "center" }} /> : <div style={{ width: 60 }} />}
+                  {famForm.members.length > 1 ? <button onClick={() => removeFamMember(idx)} style={{ padding: "6px 9px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#EF4444", fontSize: 12 }}>✕</button> : <div style={{ width: 34 }} />}
                 </div>
               ))}
             </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={createFamily} disabled={!canCreateFam} style={{ padding: "11px 26px", borderRadius: 13, border: "none", cursor: canCreateFam ? "pointer" : "default", background: canCreateFam ? "linear-gradient(135deg,#FFD166,#FF8C42)" : "rgba(255,255,255,0.08)", color: canCreateFam ? "#0F141E" : "rgba(255,255,255,0.3)", fontWeight: 700, fontSize: 13, fontFamily: F }}>✓ Créer la famille</button>
+              <button onClick={() => { setShowAddFamily(false); setFamForm(BLANK_FAM_FORM); }} style={{ padding: "11px 18px", borderRadius: 13, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
+            </div>
           </div>
-
-          <div style={{ display: "flex", gap: 8 }}>
-            <button onClick={addFamily} disabled={!canSubmit} style={{ padding: "12px 28px", borderRadius: 14, border: "none", cursor: canSubmit ? "pointer" : "default", background: canSubmit ? "linear-gradient(135deg, #FFD166, #FF8C42)" : "rgba(255,255,255,0.08)", color: canSubmit ? "#0F141E" : "rgba(255,255,255,0.3)", fontWeight: 700, fontSize: 14, fontFamily: F }}>✓ Ajouter la famille</button>
-            <button onClick={() => { setShowForm(false); setForm(BLANK_FORM); }} style={{ padding: "12px 20px", borderRadius: 14, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
@@ -634,7 +699,7 @@ function ActivitiesSection() {
   );
 }
 
-function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser }) {
+function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, roomAssignments }) {
   const [editing, setEditing] = useState(null);
   const [ed, setEd] = useState({});
   const avatars = ["👨", "👩", "👨‍🦰", "👩‍🦱", "👨‍🦱", "👩‍🦳", "🧔", "👱‍♀️", "👱", "🧒", "👦", "👧", "👶", "🧑", "🧑‍🦰", "🧑‍🦱"];
@@ -667,7 +732,7 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser })
           <div key={fam.id} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 24, overflow: "hidden", border: `1px solid ${fam.color}33` }}>
             <div style={{ background: `linear-gradient(135deg, ${fam.color}25, ${fam.color}08)`, padding: "20px 24px", display: "flex", alignItems: "center", gap: 14, borderBottom: `1px solid ${fam.color}22` }}>
               <span style={{ fontSize: 40 }}>{fam.emoji}</span>
-              <div><h3 style={{ fontFamily: PF, fontSize: 22, fontWeight: 800, color: fam.color, margin: 0 }}>{fam.name}</h3><p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "2px 0 0" }}>{fam.room}</p></div>
+              <div><h3 style={{ fontFamily: PF, fontSize: 22, fontWeight: 800, color: fam.color, margin: 0 }}>{fam.name}</h3><p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)", margin: "2px 0 0" }}>{(roomAssignments||[]).filter(ra=>ra.familyId===fam.id).map(ra=>ra.roomName).filter((v,i,a)=>a.indexOf(v)===i).join(", ")||"—"}</p></div>
             </div>
             <div style={{ padding: "12px 24px 20px" }}>
               {fam.members.map((m, mi) => {
@@ -752,10 +817,10 @@ function RulesSection() {
   );
 }
 
-function BudgetSection({ families, totalCost, setTotalCost }) {
+function BudgetSection({ families, totalCost, setTotalCost, roomAssignments }) {
   const [editingCost, setEditingCost] = useState(false);
   const [tempCost, setTempCost] = useState(String(totalCost));
-  const shares = computeShares(families, totalCost);
+  const shares = computeShares(families, totalCost, roomAssignments);
   const fmtDate = d => new Date(d + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
   const inputStyle = { padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontFamily: F, outline: "none" };
 
@@ -815,6 +880,7 @@ function BudgetSection({ families, totalCost, setTotalCost }) {
 export default function App() {
   const [active, setActive] = useState("home");
   const [families, setFamilies] = useState(DEFAULT_FAMILIES);
+  const [roomAssignments, setRoomAssignments] = useState(DEFAULT_ROOM_ASSIGNMENTS);
   const [totalCost, setTotalCost] = useState(4560);
   const [rsvps, setRsvps] = useState({});
   const [proposals, setProposals] = useState([]);
@@ -824,10 +890,9 @@ export default function App() {
   useEffect(() => {
     (async () => {
       const f = await loadData("bonheur-families", null);
-      if (f) {
-        // Migrate: ensure all families have checkIn/checkOut
-        setFamilies(f.map(fam => ({ checkIn: "2026-07-11", checkOut: "2026-07-25", ...fam })));
-      }
+      if (f) setFamilies(f.map(fam => ({ checkIn: "2026-07-11", checkOut: "2026-07-25", ...fam })));
+      const ra = await loadData("bonheur-roomAssignments", null);
+      if (ra) setRoomAssignments(ra); else setRoomAssignments(DEFAULT_ROOM_ASSIGNMENTS);
       const tc = await loadData("bonheur-totalCost", 4560); setTotalCost(tc);
       setRsvps(await loadData("bonheur-rsvps", {}));
       setProposals(await loadData("bonheur-proposals", []));
@@ -879,12 +944,12 @@ export default function App() {
           </div>
         </>
       )}
-      {active === "rooms" && <RoomsSection families={families} setFamilies={setFamilies} />}
-      {active === "budget" && <BudgetSection families={families} totalCost={totalCost} setTotalCost={setTotalCost} />}
+      {active === "rooms" && <RoomsSection families={families} setFamilies={setFamilies} roomAssignments={roomAssignments} setRoomAssignments={setRoomAssignments} />}
+      {active === "budget" && <BudgetSection families={families} totalCost={totalCost} setTotalCost={setTotalCost} roomAssignments={roomAssignments} />}
       {active === "planning" && <PlanningSection families={families} rsvps={rsvps} setRsvps={setRsvps} proposals={proposals} setProposals={setProposals} currentUser={currentUser} />}
       {active === "cooking" && <CookingSection families={families} />}
       {active === "activities" && <ActivitiesSection />}
-      {active === "profiles" && <ProfilesSection families={families} setFamilies={setFamilies} currentUser={currentUser} setCurrentUser={setCurrentUser} />}
+      {active === "profiles" && <ProfilesSection families={families} setFamilies={setFamilies} currentUser={currentUser} setCurrentUser={setCurrentUser} roomAssignments={roomAssignments} />}
       {active === "rules" && <RulesSection />}
       <footer style={{ padding: "40px 20px", textAlign: "center", background: "rgba(0,0,0,0.3)", borderTop: "1px solid rgba(255,255,255,0.04)" }}>
         <p style={{ fontFamily: PF, fontSize: 24, color: "#FFD166", margin: "0 0 8px" }}>🏡 La Maison du Bonheur 2026</p>
