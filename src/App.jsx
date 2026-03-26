@@ -171,16 +171,73 @@ async function saveData(key, data) {
 }
 
 function generateCookingPairs(families) {
+  // Construire la liste des adultes avec métadonnées
   const adults = [];
-  families.forEach(f => f.members.filter(m => m.role === "adult").forEach(m => adults.push({ name: m.name, family: f.name, color: f.color, avatar: m.avatar })));
-  const pairs = [];
-  for (let i = 0; i < 28; i++) {
-    let pool = _.shuffle([...adults]);
-    let a = pool[0], b = pool[1];
-    for (let j = 1; j < pool.length; j++) { if (pool[j].family !== a.family) { b = pool[j]; break; } }
-    pairs.push([a, b]);
+  families.forEach(f => {
+    const hasYoungChild = f.members.some(m => m.role === "child" && (m.age == null || m.age < 6));
+    f.members.filter(m => m.role === "adult").forEach(m => {
+      adults.push({ id: m.id, name: m.name, family: f.name, familyId: f.id, color: f.color, avatar: m.avatar, hasYoungChild });
+    });
+  });
+  if (adults.length < 2) return [];
+
+  const DAYS = 14;
+  // Compteurs par personne
+  const total = {}, lunches = {}, dinners = {};
+  adults.forEach(a => { total[a.id] = 0; lunches[a.id] = 0; dinners[a.id] = 0; });
+  // Historique des binômes
+  const pairHist = {};
+  const getPK = (a, b) => [a.id, b.id].sort().join("|");
+  const getPH = (a, b) => pairHist[getPK(a, b)] || 0;
+  const incPH = (a, b) => { const k = getPK(a, b); pairHist[k] = (pairHist[k] || 0) + 1; };
+
+  const result = [];
+
+  for (let day = 0; day < DAYS; day++) {
+    const usedToday = new Set(); // Règle 1 : personne ne cuisine deux fois le même jour
+
+    for (let meal = 0; meal < 2; meal++) {
+      const isDinner = meal === 1;
+      // Pool : adultes disponibles (pas encore utilisés aujourd'hui)
+      let pool = adults.filter(a => !usedToday.has(a.id));
+      if (pool.length < 2) pool = adults; // fallback si trop peu de monde
+
+      // Générer et scorer tous les binômes possibles
+      let bestScore = Infinity, bestPairs = [];
+      for (let i = 0; i < pool.length; i++) {
+        for (let j = i + 1; j < pool.length; j++) {
+          const a = pool[i], b = pool[j];
+          let score = 0;
+          // Règle 2 : équilibrer le nombre total de repas (priorité haute)
+          score += (total[a.id] + total[b.id]) * 60;
+          // Règle 3 : diversité des binômes (cuisiner avec tout le monde)
+          score += getPH(a, b) * 250;
+          // Règle 4 : équilibrer déjeuners et dîners par personne
+          if (isDinner) {
+            score += (dinners[a.id] - lunches[a.id] + dinners[b.id] - lunches[b.id]) * 40;
+          } else {
+            score += (lunches[a.id] - dinners[a.id] + lunches[b.id] - dinners[b.id]) * 40;
+          }
+          // Règle 5 : le soir, éviter que les deux parents d'une famille avec enfant < 6 ans cuisinent ensemble
+          if (isDinner && a.familyId === b.familyId && a.hasYoungChild) score += 8000;
+          // Légère randomisation pour éviter les patterns répétitifs
+          score += Math.random() * 5;
+
+          if (score < bestScore) { bestScore = score; bestPairs = [[a, b]]; }
+          else if (Math.abs(score - bestScore) < 1) bestPairs.push([a, b]);
+        }
+      }
+
+      const chosen = bestPairs[Math.floor(Math.random() * bestPairs.length)];
+      result.push(chosen);
+      chosen.forEach(p => {
+        total[p.id]++; usedToday.add(p.id);
+        if (isDinner) dinners[p.id]++; else lunches[p.id]++;
+      });
+      incPH(chosen[0], chosen[1]);
+    }
   }
-  return pairs;
+  return result;
 }
 
 const F = "'DM Sans', sans-serif";
@@ -277,10 +334,6 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
   const [assignError, setAssignError] = useState("");
   const [editingRA, setEditingRA] = useState(null);
   const [datesForm, setDatesForm] = useState({});
-  // State: créer une nouvelle famille
-  const [showAddFamily, setShowAddFamily] = useState(false);
-  const [famForm, setFamForm] = useState(BLANK_FAM_FORM);
-
   const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 13, fontFamily: F, outline: "none", boxSizing: "border-box" };
   const labelStyle = { fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 };
   const fmtDate = d => new Date(d + "T12:00:00").toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
@@ -329,29 +382,6 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
   const saveDates = (raId) => {
     const next = roomAssignments.map(ra => ra.id !== raId ? ra : { ...ra, ...datesForm });
     setRoomAssignments(next); saveData("bonheur-roomAssignments", next); setEditingRA(null);
-  };
-
-  // Créer une nouvelle famille
-  const updateFamMember = (idx, field, val) => setFamForm(f => ({ ...f, members: f.members.map((m, i) => i === idx ? { ...m, [field]: val } : m) }));
-  const addFamMember = () => setFamForm(f => ({ ...f, members: [...f.members, { ...BLANK_MEMBER }] }));
-  const removeFamMember = (idx) => setFamForm(f => ({ ...f, members: f.members.filter((_, i) => i !== idx) }));
-  const canCreateFam = famForm.name.trim() && famForm.members.some(m => m.name.trim());
-
-  const createFamily = () => {
-    if (!canCreateFam) return;
-    const slug = famForm.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-    const newFam = {
-      id: `${slug}-${Date.now()}`,
-      name: famForm.name.trim(), emoji: famForm.emoji, color: famForm.color,
-      members: famForm.members.filter(m => m.name.trim()).map((m, i) => ({
-        id: `${slug}-${i + 1}`, name: m.name.trim(), role: m.role,
-        ...(m.role === "child" && m.age ? { age: Number(m.age) } : {}),
-        avatar: m.role === "adult" ? "👤" : "🧒", diet: "", activities: [], bio: "",
-      })),
-    };
-    const next = [...families, newFam];
-    setFamilies(next); saveData("bonheur-families", next);
-    setShowAddFamily(false); setFamForm(BLANK_FAM_FORM);
   };
 
   const selectedFamily = families.find(f => f.id === assignForm.familyId);
@@ -470,58 +500,6 @@ function RoomsSection({ families, setFamilies, roomAssignments, setRoomAssignmen
         })}
       </div>
 
-      {/* Créer une nouvelle famille */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 24 }}>
-        <div style={{ textAlign: "center", marginBottom: 16 }}>
-          <button onClick={() => { setShowAddFamily(!showAddFamily); setFamForm(BLANK_FAM_FORM); }} style={{ padding: "12px 28px", borderRadius: 30, border: "none", cursor: "pointer", background: showAddFamily ? "rgba(255,255,255,0.06)" : "linear-gradient(135deg,#FFD166,#FF8C42)", color: showAddFamily ? "rgba(255,255,255,0.5)" : "#0F141E", fontWeight: 700, fontSize: 14, fontFamily: F }}>
-            {showAddFamily ? "✕ Annuler" : "➕ Créer une nouvelle famille"}
-          </button>
-        </div>
-        {showAddFamily && (
-          <div style={{ padding: 28, borderRadius: 24, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", maxWidth: 600, margin: "0 auto" }}>
-            <h3 style={{ fontFamily: PF, fontSize: 20, color: "#FFD166", margin: "0 0 18px" }}>➕ Nouvelle famille</h3>
-            <div style={{ marginBottom: 14 }}>
-              <label style={labelStyle}>Nom de la famille *</label>
-              <input value={famForm.name} onChange={e => setFamForm(d => ({ ...d, name: e.target.value }))} placeholder="Ex: Dupont" style={inputStyle} />
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
-              <div>
-                <label style={labelStyle}>Emoji</label>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
-                  {FAMILY_EMOJIS.map(em => (<button key={em} onClick={() => setFamForm(d => ({ ...d, emoji: em }))} style={{ width: 34, height: 34, borderRadius: 9, border: famForm.emoji === em ? "2px solid #FFD166" : "2px solid transparent", cursor: "pointer", fontSize: 19, background: famForm.emoji === em ? "rgba(255,200,60,0.15)" : "rgba(255,255,255,0.06)" }}>{em}</button>))}
-                </div>
-              </div>
-              <div>
-                <label style={labelStyle}>Couleur</label>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
-                  {FAMILY_COLORS.map(col => (<button key={col} onClick={() => setFamForm(d => ({ ...d, color: col }))} style={{ width: 28, height: 28, borderRadius: "50%", border: famForm.color === col ? "3px solid white" : "3px solid transparent", cursor: "pointer", background: col, outline: "none" }} />))}
-                </div>
-              </div>
-            </div>
-            <div style={{ marginBottom: 18 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-                <label style={{ ...labelStyle, margin: 0 }}>Membres *</label>
-                <button onClick={addFamMember} style={{ padding: "4px 12px", borderRadius: 20, border: "none", cursor: "pointer", background: "rgba(255,200,60,0.12)", color: "#FFD166", fontFamily: F, fontSize: 12, fontWeight: 600 }}>+ Ajouter</button>
-              </div>
-              {famForm.members.map((m, idx) => (
-                <div key={idx} style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: 8, alignItems: "center", marginBottom: 6 }}>
-                  <input value={m.name} onChange={e => updateFamMember(idx, "name", e.target.value)} placeholder={idx === 0 ? "Prénom (référent)" : "Prénom"} style={{ ...inputStyle, padding: "8px 12px", fontSize: 12 }} />
-                  <select value={m.role} onChange={e => updateFamMember(idx, "role", e.target.value)} style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 12, fontFamily: F, cursor: "pointer", outline: "none" }}>
-                    <option value="adult">Adulte</option>
-                    <option value="child">Enfant</option>
-                  </select>
-                  {m.role === "child" ? <input type="number" value={m.age} onChange={e => updateFamMember(idx, "age", e.target.value)} placeholder="Âge" min="0" max="17" style={{ ...inputStyle, width: 60, padding: "8px 8px", fontSize: 12, textAlign: "center" }} /> : <div style={{ width: 60 }} />}
-                  {famForm.members.length > 1 ? <button onClick={() => removeFamMember(idx)} style={{ padding: "6px 9px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#EF4444", fontSize: 12 }}>✕</button> : <div style={{ width: 34 }} />}
-                </div>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button onClick={createFamily} disabled={!canCreateFam} style={{ padding: "11px 26px", borderRadius: 13, border: "none", cursor: canCreateFam ? "pointer" : "default", background: canCreateFam ? "linear-gradient(135deg,#FFD166,#FF8C42)" : "rgba(255,255,255,0.08)", color: canCreateFam ? "#0F141E" : "rgba(255,255,255,0.3)", fontWeight: 700, fontSize: 13, fontFamily: F }}>✓ Créer la famille</button>
-              <button onClick={() => { setShowAddFamily(false); setFamForm(BLANK_FAM_FORM); }} style={{ padding: "11px 18px", borderRadius: 13, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
-            </div>
-          </div>
-        )}
-      </div>
     </div>
   );
 }
@@ -648,6 +626,7 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
 function CookingSection({ families }) {
   const [pairs, setPairs] = useState(() => generateCookingPairs(families));
   const [key, setKey] = useState(0);
+  useEffect(() => { setPairs(generateCookingPairs(families)); setKey(k => k + 1); }, [families.length]);
   return (
     <div style={{ padding: "0 20px 40px", maxWidth: 920, margin: "0 auto" }}>
       <SectionTitle icon="👨‍🍳" title="Planning Cuisine" subtitle="Binômes aléatoires inter-familles — remélange autant que tu veux !" />
@@ -703,8 +682,39 @@ function ActivitiesSection() {
 }
 
 function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, roomAssignments }) {
+  const FAMILY_EMOJIS = ["🦁", "🐻", "🦊", "🐼", "🦅", "🦋", "🐬", "🐯", "🦉", "🦄", "🐸", "🐺", "🦓", "🦒", "🐙", "🦀"];
+  const FAMILY_COLORS = ["#E8733A", "#4A90D9", "#6BBF6B", "#9B59B6", "#E74C3C", "#F39C12", "#1ABC9C", "#E91E63", "#00BCD4", "#FF5722"];
+  const BLANK_MEMBER = { name: "", role: "adult", age: "" };
+  const BLANK_FAM_FORM = { name: "", emoji: "🦄", color: "#9B59B6", members: [{ ...BLANK_MEMBER }] };
+  const inputStyle = { width: "100%", padding: "10px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 13, fontFamily: F, outline: "none", boxSizing: "border-box" };
+  const labelStyle = { fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)", display: "block", marginBottom: 6 };
+
   const [editing, setEditing] = useState(null);
   const [ed, setEd] = useState({});
+  const [showAddFamily, setShowAddFamily] = useState(false);
+  const [famForm, setFamForm] = useState(BLANK_FAM_FORM);
+
+  const updateFamMember = (idx, field, val) => setFamForm(f => ({ ...f, members: f.members.map((m, i) => i === idx ? { ...m, [field]: val } : m) }));
+  const addFamMember = () => setFamForm(f => ({ ...f, members: [...f.members, { ...BLANK_MEMBER }] }));
+  const removeFamMember = (idx) => setFamForm(f => ({ ...f, members: f.members.filter((_, i) => i !== idx) }));
+  const canCreateFam = famForm.name.trim() && famForm.members.some(m => m.name.trim());
+
+  const createFamily = () => {
+    if (!canCreateFam) return;
+    const slug = famForm.name.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+    const newFam = {
+      id: `${slug}-${Date.now()}`,
+      name: famForm.name.trim(), emoji: famForm.emoji, color: famForm.color,
+      members: famForm.members.filter(m => m.name.trim()).map((m, i) => ({
+        id: `${slug}-${i + 1}`, name: m.name.trim(), role: m.role,
+        ...(m.role === "child" && m.age ? { age: Number(m.age) } : {}),
+        avatar: m.role === "adult" ? "👤" : "🧒", diet: "", activities: [], bio: "",
+      })),
+    };
+    const next = [...families, newFam];
+    setFamilies(next); saveData("bonheur-families", next);
+    setShowAddFamily(false); setFamForm(BLANK_FAM_FORM);
+  };
   const avatars = [
     // Femmes — teintes variées
     "👩🏻", "👩🏼", "👩🏽", "👩🏾", "👩🏿",
@@ -804,6 +814,59 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
           </div>
         ))}
       </div>
+
+      {/* Créer une nouvelle famille */}
+      <div style={{ borderTop: "1px solid rgba(255,255,255,0.06)", paddingTop: 28, marginTop: 12 }}>
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
+          <button onClick={() => { setShowAddFamily(!showAddFamily); setFamForm(BLANK_FAM_FORM); }} style={{ padding: "12px 28px", borderRadius: 30, border: "none", cursor: "pointer", background: showAddFamily ? "rgba(255,255,255,0.06)" : "linear-gradient(135deg,#FFD166,#FF8C42)", color: showAddFamily ? "rgba(255,255,255,0.5)" : "#0F141E", fontWeight: 700, fontSize: 14, fontFamily: F }}>
+            {showAddFamily ? "✕ Annuler" : "➕ Créer une nouvelle famille"}
+          </button>
+        </div>
+        {showAddFamily && (
+          <div style={{ padding: 28, borderRadius: 24, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", maxWidth: 600, margin: "0 auto" }}>
+            <h3 style={{ fontFamily: PF, fontSize: 20, color: "#FFD166", margin: "0 0 18px" }}>➕ Nouvelle famille</h3>
+            <div style={{ marginBottom: 14 }}>
+              <label style={labelStyle}>Nom de la famille *</label>
+              <input value={famForm.name} onChange={e => setFamForm(d => ({ ...d, name: e.target.value }))} placeholder="Ex: Dupont" style={inputStyle} />
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+              <div>
+                <label style={labelStyle}>Emoji</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                  {FAMILY_EMOJIS.map(em => (<button key={em} onClick={() => setFamForm(d => ({ ...d, emoji: em }))} style={{ width: 34, height: 34, borderRadius: 9, border: famForm.emoji === em ? "2px solid #FFD166" : "2px solid transparent", cursor: "pointer", fontSize: 19, background: famForm.emoji === em ? "rgba(255,200,60,0.15)" : "rgba(255,255,255,0.06)" }}>{em}</button>))}
+                </div>
+              </div>
+              <div>
+                <label style={labelStyle}>Couleur</label>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                  {FAMILY_COLORS.map(col => (<button key={col} onClick={() => setFamForm(d => ({ ...d, color: col }))} style={{ width: 28, height: 28, borderRadius: "50%", border: famForm.color === col ? "3px solid white" : "3px solid transparent", cursor: "pointer", background: col, outline: "none" }} />))}
+                </div>
+              </div>
+            </div>
+            <div style={{ marginBottom: 18 }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                <label style={{ ...labelStyle, margin: 0 }}>Membres *</label>
+                <button onClick={addFamMember} style={{ padding: "4px 12px", borderRadius: 20, border: "none", cursor: "pointer", background: "rgba(255,200,60,0.12)", color: "#FFD166", fontFamily: F, fontSize: 12, fontWeight: 600 }}>+ Ajouter</button>
+              </div>
+              {famForm.members.map((m, idx) => (
+                <div key={idx} style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: 8, alignItems: "center", marginBottom: 6 }}>
+                  <input value={m.name} onChange={e => updateFamMember(idx, "name", e.target.value)} placeholder={idx === 0 ? "Prénom (référent)" : "Prénom"} style={{ ...inputStyle, padding: "8px 12px", fontSize: 12 }} />
+                  <select value={m.role} onChange={e => updateFamMember(idx, "role", e.target.value)} style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 12, fontFamily: F, cursor: "pointer", outline: "none" }}>
+                    <option value="adult">Adulte</option>
+                    <option value="child">Enfant</option>
+                  </select>
+                  {m.role === "child" ? <input type="number" value={m.age} onChange={e => updateFamMember(idx, "age", e.target.value)} placeholder="Âge" min="0" max="17" style={{ ...inputStyle, width: 60, padding: "8px 8px", fontSize: 12, textAlign: "center" }} /> : <div style={{ width: 60 }} />}
+                  {famForm.members.length > 1 ? <button onClick={() => removeFamMember(idx)} style={{ padding: "6px 9px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#EF4444", fontSize: 12 }}>✕</button> : <div style={{ width: 34 }} />}
+                </div>
+              ))}
+            </div>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button onClick={createFamily} disabled={!canCreateFam} style={{ padding: "11px 26px", borderRadius: 13, border: "none", cursor: canCreateFam ? "pointer" : "default", background: canCreateFam ? "linear-gradient(135deg,#FFD166,#FF8C42)" : "rgba(255,255,255,0.08)", color: canCreateFam ? "#0F141E" : "rgba(255,255,255,0.3)", fontWeight: 700, fontSize: 13, fontFamily: F }}>✓ Créer la famille</button>
+              <button onClick={() => { setShowAddFamily(false); setFamForm(BLANK_FAM_FORM); }} style={{ padding: "11px 18px", borderRadius: 13, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.06)", color: "rgba(255,255,255,0.4)", fontSize: 13, fontFamily: F }}>Annuler</button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -865,7 +928,7 @@ function BudgetSection({ families, totalCost, setTotalCost, roomAssignments }) {
       </div>
 
       {families.length === 0 ? (
-        <div style={{ textAlign: "center", padding: 40, color: "rgba(255,255,255,0.3)", fontFamily: F }}>Aucune famille enregistrée. Ajoute des familles dans l'onglet Chambres.</div>
+        <div style={{ textAlign: "center", padding: 40, color: "rgba(255,255,255,0.3)", fontFamily: F }}>Aucune famille enregistrée. Ajoute des familles dans l'onglet Profils.</div>
       ) : (
         <>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: 16, marginBottom: 20 }}>
