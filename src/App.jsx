@@ -170,22 +170,28 @@ async function saveData(key, data) {
   try { localStorage.setItem(key, JSON.stringify(data)); } catch (e) { console.error("Save error", e); }
 }
 
-function generateCookingPairs(families) {
-  // Construire la liste des adultes avec métadonnées
+function generateCookingPairs(families, roomAssignments) {
+  // Construire la liste des adultes avec leurs intervalles de présence
   const adults = [];
   families.forEach(f => {
     const hasYoungChild = f.members.some(m => m.role === "child" && (m.age == null || m.age < 6));
     f.members.filter(m => m.role === "adult").forEach(m => {
-      adults.push({ id: m.id, name: m.name, family: f.name, familyId: f.id, color: f.color, avatar: m.avatar, hasYoungChild });
+      // Présence = union des affectations de chambre qui incluent ce membre
+      const intervals = (roomAssignments || [])
+        .filter(ra => ra.familyId === f.id && ra.memberIds.includes(m.id))
+        .map(ra => ({ checkIn: ra.checkIn, checkOut: ra.checkOut }));
+      adults.push({ id: m.id, name: m.name, family: f.name, familyId: f.id, color: f.color, avatar: m.avatar, hasYoungChild, intervals });
     });
   });
-  if (adults.length < 2) return [];
+  if (adults.length < 1) return [];
+
+  // Présent si checkIn <= dayKey < checkOut (pas de cuisine le jour du départ)
+  const isPresent = (adult, dayKey) =>
+    adult.intervals.some(iv => iv.checkIn <= dayKey && dayKey < iv.checkOut);
 
   const DAYS = 14;
-  // Compteurs par personne
   const total = {}, lunches = {}, dinners = {};
   adults.forEach(a => { total[a.id] = 0; lunches[a.id] = 0; dinners[a.id] = 0; });
-  // Historique des binômes
   const pairHist = {};
   const getPK = (a, b) => [a.id, b.id].sort().join("|");
   const getPH = (a, b) => pairHist[getPK(a, b)] || 0;
@@ -194,35 +200,42 @@ function generateCookingPairs(families) {
   const result = [];
 
   for (let day = 0; day < DAYS; day++) {
-    const usedToday = new Set(); // Règle 1 : personne ne cuisine deux fois le même jour
+    const dayKey = DATES[day].key;
+    const usedToday = new Set();
 
     for (let meal = 0; meal < 2; meal++) {
       const isDinner = meal === 1;
-      // Pool : adultes disponibles (pas encore utilisés aujourd'hui)
-      let pool = adults.filter(a => !usedToday.has(a.id));
-      if (pool.length < 2) pool = adults; // fallback si trop peu de monde
+      // Seuls les adultes présents ce jour-là participent
+      const presentAdults = adults.filter(a => isPresent(a, dayKey));
 
-      // Générer et scorer tous les binômes possibles
+      if (presentAdults.length === 0) { result.push(null); continue; }
+      if (presentAdults.length === 1) {
+        // Solo : cas rare (1 seul adulte sur place)
+        const solo = presentAdults[0];
+        result.push([solo]);
+        total[solo.id]++; usedToday.add(solo.id);
+        if (isDinner) dinners[solo.id]++; else lunches[solo.id]++;
+        continue;
+      }
+
+      // Règle 1 : pas deux fois le même jour
+      let pool = presentAdults.filter(a => !usedToday.has(a.id));
+      if (pool.length < 2) pool = presentAdults;
+
       let bestScore = Infinity, bestPairs = [];
       for (let i = 0; i < pool.length; i++) {
         for (let j = i + 1; j < pool.length; j++) {
           const a = pool[i], b = pool[j];
           let score = 0;
-          // Règle 2 : équilibrer le nombre total de repas (priorité haute)
-          score += (total[a.id] + total[b.id]) * 60;
-          // Règle 3 : diversité des binômes (cuisiner avec tout le monde)
-          score += getPH(a, b) * 250;
-          // Règle 4 : équilibrer déjeuners et dîners par personne
+          score += (total[a.id] + total[b.id]) * 60;         // Règle 2 : équité
+          score += getPH(a, b) * 250;                         // Règle 3 : diversité
           if (isDinner) {
             score += (dinners[a.id] - lunches[a.id] + dinners[b.id] - lunches[b.id]) * 40;
           } else {
             score += (lunches[a.id] - dinners[a.id] + lunches[b.id] - dinners[b.id]) * 40;
           }
-          // Règle 5 : le soir, éviter que les deux parents d'une famille avec enfant < 6 ans cuisinent ensemble
-          if (isDinner && a.familyId === b.familyId && a.hasYoungChild) score += 8000;
-          // Légère randomisation pour éviter les patterns répétitifs
+          if (isDinner && a.familyId === b.familyId && a.hasYoungChild) score += 8000; // Règle 5
           score += Math.random() * 5;
-
           if (score < bestScore) { bestScore = score; bestPairs = [[a, b]]; }
           else if (Math.abs(score - bestScore) < 1) bestPairs.push([a, b]);
         }
@@ -230,10 +243,7 @@ function generateCookingPairs(families) {
 
       const chosen = bestPairs[Math.floor(Math.random() * bestPairs.length)];
       result.push(chosen);
-      chosen.forEach(p => {
-        total[p.id]++; usedToday.add(p.id);
-        if (isDinner) dinners[p.id]++; else lunches[p.id]++;
-      });
+      chosen.forEach(p => { total[p.id]++; usedToday.add(p.id); if (isDinner) dinners[p.id]++; else lunches[p.id]++; });
       incPH(chosen[0], chosen[1]);
     }
   }
@@ -672,28 +682,59 @@ function PlanningSection({ families, rsvps, setRsvps, proposals, setProposals, c
   );
 }
 
-function CookingSection({ families }) {
-  const [pairs, setPairs] = useState(() => generateCookingPairs(families));
+function CookingSection({ families, roomAssignments }) {
+  // Clé de réactivité : changements de familles OU d'affectations de chambre
+  const raKey = (roomAssignments || []).map(ra => `${ra.id}:${ra.checkIn}-${ra.checkOut}-${ra.memberIds.join(",")}`).join("|");
+  const [pairs, setPairs] = useState(() => generateCookingPairs(families, roomAssignments));
   const [key, setKey] = useState(0);
-  useEffect(() => { setPairs(generateCookingPairs(families)); setKey(k => k + 1); }, [families.length]);
+  useEffect(() => {
+    setPairs(generateCookingPairs(families, roomAssignments));
+    setKey(k => k + 1);
+  }, [families.length, raKey]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const regen = () => { setPairs(generateCookingPairs(families, roomAssignments)); setKey(k => k + 1); };
+
+  // Compteurs par personne pour l'affichage
+  const mealCounts = {};
+  pairs.forEach(pair => { if (pair) pair.forEach(p => { mealCounts[p.id] = (mealCounts[p.id] || 0) + 1; }); });
+  const allAdults = families.flatMap(f => f.members.filter(m => m.role === "adult").map(m => ({ ...m, color: f.color })));
+
   return (
     <div style={{ padding: "0 20px 40px", maxWidth: 920, margin: "0 auto" }}>
-      <SectionTitle icon="👨‍🍳" title="Planning Cuisine" subtitle="Binômes aléatoires inter-familles — remélange autant que tu veux !" />
-      <div style={{ textAlign: "center", marginBottom: 24 }}>
-        <button onClick={() => { setPairs(generateCookingPairs(families)); setKey(k => k + 1); }} style={{ padding: "14px 32px", borderRadius: 40, border: "none", cursor: "pointer", background: "linear-gradient(135deg, #FFD166, #FF8C42)", color: "#0F141E", fontWeight: 700, fontSize: 15, fontFamily: F, boxShadow: "0 4px 24px rgba(255,140,66,0.3)" }}>🎲 Remélanger !</button>
+      <SectionTitle icon="👨‍🍳" title="Planning Cuisine" subtitle="Binômes calculés selon les présences réelles — remélange si tu veux !" />
+      <div style={{ textAlign: "center", marginBottom: 20 }}>
+        <button onClick={regen} style={{ padding: "14px 32px", borderRadius: 40, border: "none", cursor: "pointer", background: "linear-gradient(135deg, #FFD166, #FF8C42)", color: "#0F141E", fontWeight: 700, fontSize: 15, fontFamily: F, boxShadow: "0 4px 24px rgba(255,140,66,0.3)" }}>🎲 Remélanger !</button>
       </div>
+
+      {/* Récapitulatif par personne */}
+      {allAdults.length > 0 && (
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "center", marginBottom: 24 }}>
+          {allAdults.map(m => (
+            <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 24, background: `${m.color}15`, border: `1px solid ${m.color}30` }}>
+              <span style={{ fontSize: 16 }}>{m.avatar}</span>
+              <span style={{ fontFamily: F, fontSize: 12, color: m.color, fontWeight: 600 }}>{m.name}</span>
+              <span style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.4)" }}>{mealCounts[m.id] || 0} repas</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: 12 }}>
         {DATES.map((d, di) => (
           <div key={`${di}-${key}`} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 16, padding: 16, border: "1px solid rgba(255,255,255,0.06)" }}>
             <div style={{ fontFamily: F, fontSize: 13, fontWeight: 700, color: "#FFD166", marginBottom: 10, textTransform: "capitalize" }}>{d.day} {d.num} juil.</div>
             {["Déjeuner", "Dîner"].map((meal, mi) => {
-              const pair = pairs[di * 2 + mi]; if (!pair) return null;
+              const pair = pairs[di * 2 + mi];
               return (
                 <div key={mi} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, padding: "6px 10px", borderRadius: 10, background: "rgba(255,255,255,0.03)" }}>
                   <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.3)", width: 52, flexShrink: 0 }}>{meal}</span>
-                  <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
-                    {pair.map((p, pi) => (<span key={pi} style={{ fontFamily: F, fontSize: 11, padding: "3px 8px", borderRadius: 8, background: `${p.color}20`, color: p.color, fontWeight: 600 }}>{p.name} {p.avatar}</span>))}
-                  </div>
+                  {!pair ? (
+                    <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.15)", fontStyle: "italic" }}>—</span>
+                  ) : (
+                    <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                      {pair.map((p, pi) => (<span key={pi} style={{ fontFamily: F, fontSize: 11, padding: "3px 8px", borderRadius: 8, background: `${p.color}20`, color: p.color, fontWeight: 600 }}>{p.name} {p.avatar}</span>))}
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -1205,7 +1246,7 @@ export default function App() {
       {active === "rooms" && <RoomsSection families={families} setFamilies={setFamilies} roomAssignments={roomAssignments} setRoomAssignments={setRoomAssignments} />}
       {active === "budget" && <BudgetSection families={families} totalCost={totalCost} setTotalCost={setTotalCost} roomAssignments={roomAssignments} />}
       {active === "planning" && <PlanningSection families={families} rsvps={rsvps} setRsvps={setRsvps} proposals={proposals} setProposals={setProposals} currentUser={currentUser} meals={meals} setMeals={setMeals} />}
-      {active === "cooking" && <CookingSection families={families} />}
+      {active === "cooking" && <CookingSection families={families} roomAssignments={roomAssignments} />}
       {active === "activities" && <ActivitiesSection />}
       {active === "courses" && <ShoppingSection meals={meals} shoppingItems={shoppingItems} setShoppingItems={setShoppingItems} currentUser={currentUser} families={families} />}
       {active === "profiles" && <ProfilesSection families={families} setFamilies={setFamilies} currentUser={currentUser} setCurrentUser={setCurrentUser} roomAssignments={roomAssignments} />}
