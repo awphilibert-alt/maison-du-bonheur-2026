@@ -120,6 +120,9 @@ const ALL_ACTIVITY_TAGS = [
   "Marchés", "Vélo", "Cuisine", "Ping-pong", "Foot", "Jeux vidéo", "Mölkky",
   "Photos", "Escalade", "Cognac", "Accrobranche", "Trampoline", "Dessin",
   "Équitation", "Golf", "Farniente", "Musique", "Jeux de société",
+  "Apéro", "Rosé", "Sieste", "Commérage", "Tchin", "Rhum-coca",
+  "Bronzage", "Glande", "Ragots", "Bifler Nicolas", "Poker", "Karaokë",
+  "Binge-watching", "Footing honteux", "Verre de trop", "Philosophie de comptoir",
 ];
 
 function computeNights(checkIn, checkOut) {
@@ -702,7 +705,23 @@ function ActivitiesSection() {
 function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, roomAssignments }) {
   const [editing, setEditing] = useState(null);
   const [ed, setEd] = useState({});
-  const avatars = ["👨", "👩", "👨‍🦰", "👩‍🦱", "👨‍🦱", "👩‍🦳", "🧔", "👱‍♀️", "👱", "🧒", "👦", "👧", "👶", "🧑", "🧑‍🦰", "🧑‍🦱"];
+  const avatars = [
+    // Femmes — teintes variées
+    "👩🏻", "👩🏼", "👩🏽", "👩🏾", "👩🏿",
+    // Hommes — teintes variées
+    "👨🏻", "👨🏼", "👨🏽", "👨🏾", "👨🏿",
+    // Barbus
+    "🧔🏻", "🧔🏽", "🧔🏾", "🧔🏿",
+    // Cheveux roux/bouclés/blancs
+    "👨🏽‍🦰", "👩🏽‍🦱", "👨🏾‍🦱", "👩🏾‍🦳",
+    // Enfants — teintes variées
+    "🧒🏻", "🧒🏼", "🧒🏽", "🧒🏾", "🧒🏿",
+    "👦🏻", "👦🏽", "👦🏾", "👧🏼", "👧🏽", "👧🏾",
+    // Bébés
+    "👶🏻", "👶🏽", "👶🏾", "👶🏿",
+    // Neutres
+    "🧑🏻", "🧑🏽", "🧑🏾",
+  ];
   const startEdit = (fid, mid) => {
     const m = families.find(f => f.id === fid).members.find(m => m.id === mid);
     setEditing(`${fid}:${mid}`); setEd({ diet: m.diet || "", activities: [...(m.activities || [])], bio: m.bio || "", avatar: m.avatar });
