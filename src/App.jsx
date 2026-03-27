@@ -95,24 +95,26 @@ const DEFAULT_PLANNING = [
   { am: "😢 Rangement & ménage collectif", pm: "🚗 Départ — à l'année prochaine !", eve: "" },
 ];
 
+const GITE_COORDS = "Nougerède, 16190 Salles-Lavalette";
+
 const ACTIVITIES_LIST = [
-  { icon: "🏊", name: "Piscine au gîte", category: "sport", duration: "Journée", desc: "12m x 6m de bonheur aquatique" },
-  { icon: "🛶", name: "Canoë à Aubeterre", category: "sport", duration: "½ journée", desc: "Base de canoë sur la Dronne, 15 min" },
-  { icon: "🏰", name: "Aubeterre-sur-Dronne", category: "culture", duration: "½ journée", desc: "Plus beau village de France + église troglodyte" },
-  { icon: "🧗", name: "Accrobranche Poltrot", category: "sport", duration: "½ journée", desc: "Parcours tous niveaux, 15 min" },
-  { icon: "🥾", name: "Randonnée", category: "sport", duration: "½ journée", desc: "Chemins balisés depuis le gîte" },
-  { icon: "🏇", name: "Équitation", category: "sport", duration: "½ journée", desc: "Écuries des Chênes, 15 min" },
-  { icon: "🏖️", name: "Plage d'Aubeterre", category: "sport", duration: "½ journée", desc: "Bord de Dronne, 15 min" },
-  { icon: "🏌️", name: "Golf de Longeveau", category: "sport", duration: "½ journée", desc: "10 min du gîte" },
-  { icon: "🏰", name: "Château de la Mercerie", category: "culture", duration: "½ journée", desc: "10 min — le Versailles charentais" },
-  { icon: "🎨", name: "Angoulême & BD", category: "culture", duration: "Journée", desc: "Cité de la BD, murs peints, 30 min" },
-  { icon: "🍷", name: "Dégustation Cognac/Pineau", category: "gastro", duration: "½ journée", desc: "Château des Plassons, 10 min" },
-  { icon: "🛒", name: "Marché de producteurs", category: "gastro", duration: "Matinée", desc: "Marchés d'été locaux" },
-  { icon: "🍽️", name: "Restaurant", category: "gastro", duration: "Soirée", desc: "L'Envie Gourmande, L'École, Le Lavalette..." },
-  { icon: "🎯", name: "Mölkky & Pétanque", category: "sport", duration: "Aprem", desc: "Tournoi maison !" },
-  { icon: "🏓", name: "Ping-pong", category: "sport", duration: "Aprem", desc: "Le tournoi légendaire" },
-  { icon: "🌿", name: "Visite ferme bio", category: "culture", duration: "1h", desc: "Ferme de Nougerède, sur place !" },
-  { icon: "🍺", name: "Brasserie La Nouge", category: "gastro", duration: "1h", desc: "Bière bio artisanale, sur place !" },
+  { icon: "🏊", name: "Piscine", category: "sport", duration: "Journée", desc: "12m × 6m, directement dans le jardin du gîte", tags: ["maison", "enfant"] },
+  { icon: "🎯", name: "Mölkky & Pétanque", category: "sport", duration: "Aprem", desc: "Tournoi maison dans le jardin", tags: ["maison", "enfant"] },
+  { icon: "🏓", name: "Ping-pong", category: "sport", duration: "Aprem", desc: "Le tournoi légendaire du séjour", tags: ["maison", "enfant"] },
+  { icon: "🥾", name: "Randonnée", category: "sport", duration: "½ journée", desc: "Chemins balisés au départ du gîte", tags: ["maison", "enfant"] },
+  { icon: "🌿", name: "Ferme bio de Nougerède", category: "culture", duration: "1h", desc: "Bœuf bio charentais élevé sur place", tags: ["maison", "enfant"], url: "http://boeufbiocharente-nougerede.fr/" },
+  { icon: "🍺", name: "Brasserie La Nouge", category: "gastro", duration: "1h", desc: "Bière artisanale brassée sur place", tags: ["maison"] },
+  { icon: "🛶", name: "Canoë à Aubeterre", category: "sport", duration: "½ journée", desc: "Base nautique SNPA sur la Dronne", distance: "12 km · 15 min", tags: ["enfant"], url: "https://www.aubeterresurdronne.com/?wpbdp_listing=canoe-kayak" },
+  { icon: "🏰", name: "Aubeterre-sur-Dronne", category: "culture", duration: "½ journée", desc: "Plus beau village de France + église troglodyte", distance: "12 km · 15 min", tags: ["enfant"], url: "https://www.aubeterresurdronne.com/" },
+  { icon: "🏖️", name: "Plage de la Dronne", category: "sport", duration: "½ journée", desc: "Plage naturelle au pied du village d'Aubeterre", distance: "12 km · 15 min", tags: ["enfant"], url: "https://www.sudcharentetourisme.fr/fiche-sit/base-de-loisirs-daubeterre-sur-dronne-5758025/" },
+  { icon: "🧗", name: "Accrobranche Poltrot", category: "sport", duration: "½ journée", desc: "Parcours tous niveaux dès 7 ans, lac, labyrinthe", distance: "12 km · 15 min", tags: ["enfant"], url: "https://www.poltrot.fr/" },
+  { icon: "🏇", name: "Équitation", category: "sport", duration: "½ journée", desc: "Écuries des Chênes, tous niveaux", distance: "10 km · 15 min", tags: ["enfant"] },
+  { icon: "🏌️", name: "Golf de Longeveau", category: "sport", duration: "½ journée", desc: "9 trous dans un cadre exceptionnel à Pillac", distance: "8 km · 10 min", tags: [], url: "https://www.longeveau.com/fre/golf/" },
+  { icon: "🏰", name: "Château de la Mercerie", category: "culture", duration: "½ journée", desc: "Le Versailles charentais, jardins à la française", distance: "8 km · 10 min", tags: ["enfant"] },
+  { icon: "🎨", name: "Angoulême & BD", category: "culture", duration: "Journée", desc: "Cité de la BD, murs peints, vieille ville médiévale", distance: "30 km · 30 min", tags: ["enfant"], url: "https://www.angouleme-tourisme.com/" },
+  { icon: "🍷", name: "Dégustation Cognac/Pineau", category: "gastro", duration: "½ journée", desc: "Visite & dégustation au Château des Plassons", distance: "8 km · 10 min", tags: [], url: "https://www.chateaudesplassons.com/" },
+  { icon: "🛒", name: "Marchés de producteurs", category: "gastro", duration: "Matinée", desc: "Marchés estivaux du Sud-Charente", distance: "10–20 min", tags: ["enfant"], url: "https://www.sudcharentetourisme.fr/" },
+  { icon: "🍽️", name: "Restaurant", category: "gastro", duration: "Soirée", desc: "L'Envie Gourmande, L'École, Le Lavalette...", distance: "10–20 min", tags: [] },
 ];
 
 const ALL_ACTIVITY_TAGS = [
@@ -807,25 +809,65 @@ function CookingSection({ families, roomAssignments, meals, setMeals }) {
 
 function ActivitiesSection() {
   const [filter, setFilter] = useState("all");
-  const cats = [{ id: "all", label: "Tout", icon: "✨" }, { id: "sport", label: "Sport", icon: "🏊" }, { id: "culture", label: "Culture", icon: "🏰" }, { id: "gastro", label: "Gastro", icon: "🍷" }];
-  const filtered = filter === "all" ? ACTIVITIES_LIST : ACTIVITIES_LIST.filter(a => a.category === filter);
+  const cats = [
+    { id: "all", label: "Tout", icon: "✨" },
+    { id: "maison", label: "Maison", icon: "🏠" },
+    { id: "enfant", label: "Enfants", icon: "🧒" },
+    { id: "sport", label: "Sport", icon: "🏊" },
+    { id: "culture", label: "Culture", icon: "🏰" },
+    { id: "gastro", label: "Gastro", icon: "🍷" },
+  ];
+  const filtered = ACTIVITIES_LIST.filter(a => {
+    if (filter === "maison") return a.tags?.includes("maison");
+    if (filter === "enfant") return a.tags?.includes("enfant");
+    if (filter === "all") return true;
+    return a.category === filter;
+  });
+
+  const handleClick = (a) => {
+    const isOnSite = a.tags?.includes("maison");
+    if (isOnSite && !a.url) return;
+    const url = a.url || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(a.name + " " + GITE_COORDS)}`;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
   return (
     <div style={{ padding: "0 20px 40px", maxWidth: 920, margin: "0 auto" }}>
-      <SectionTitle icon="🎯" title="Activités" subtitle="Tout ce qu'on peut faire autour de Nougerède" />
-      <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 24 }}>
-        {cats.map(c => (<button key={c.id} onClick={() => setFilter(c.id)} style={{ padding: "8px 18px", borderRadius: 30, border: "none", cursor: "pointer", background: filter === c.id ? "rgba(255,200,60,0.15)" : "rgba(255,255,255,0.04)", color: filter === c.id ? "#FFD166" : "rgba(255,255,255,0.4)", fontWeight: 600, fontSize: 13, fontFamily: F }}>{c.icon} {c.label}</button>))}
+      <SectionTitle icon="🎯" title="Activités" subtitle="Salles-Lavalette & alentours — cliquez sur une carte pour ouvrir le site ou Maps" />
+      <div style={{ display: "flex", justifyContent: "center", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
+        {cats.map(c => (
+          <button key={c.id} onClick={() => setFilter(c.id)} style={{ padding: "8px 18px", borderRadius: 30, border: "none", cursor: "pointer", background: filter === c.id ? "rgba(255,200,60,0.15)" : "rgba(255,255,255,0.04)", color: filter === c.id ? "#FFD166" : "rgba(255,255,255,0.4)", fontWeight: 600, fontSize: 13, fontFamily: F }}>{c.icon} {c.label}</button>
+        ))}
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 12 }}>
-        {filtered.map((a, i) => (
-          <div key={i} style={{ display: "flex", gap: 14, padding: "16px 18px", borderRadius: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.13)" }}>
-            <span style={{ fontSize: 32, lineHeight: 1 }}>{a.icon}</span>
-            <div>
-              <h4 style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "white", margin: "0 0 4px" }}>{a.name}</h4>
-              <p style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.7)", margin: "0 0 6px" }}>{a.desc}</p>
-              <span style={{ fontFamily: F, fontSize: 10, color: "#FFD166", background: "rgba(255,200,60,0.1)", padding: "2px 8px", borderRadius: 8 }}>⏱ {a.duration}</span>
+        {filtered.map((a, i) => {
+          const isOnSite = a.tags?.includes("maison");
+          const isKid = a.tags?.includes("enfant");
+          const isClickable = !isOnSite || !!a.url;
+          return (
+            <div key={i} onClick={() => handleClick(a)} style={{ display: "flex", flexDirection: "column", gap: 10, padding: "16px 18px", borderRadius: 16, background: isOnSite ? "rgba(107,191,107,0.07)" : "rgba(255,255,255,0.07)", border: `1px solid ${isOnSite ? "rgba(107,191,107,0.2)" : "rgba(255,255,255,0.11)"}`, cursor: isClickable ? "pointer" : "default", transition: "opacity 0.15s" }}
+              onMouseEnter={e => { if (isClickable) e.currentTarget.style.opacity = "0.8"; }}
+              onMouseLeave={e => { e.currentTarget.style.opacity = "1"; }}
+            >
+              <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                <span style={{ fontSize: 30, lineHeight: 1, flexShrink: 0 }}>{a.icon}</span>
+                <div style={{ flex: 1 }}>
+                  <h4 style={{ fontFamily: F, fontSize: 14, fontWeight: 700, color: "white", margin: "0 0 4px", display: "flex", alignItems: "center", gap: 5 }}>
+                    {a.name}
+                    {isClickable && <span style={{ fontSize: 10, color: "rgba(255,255,255,0.3)" }}>↗</span>}
+                  </h4>
+                  <p style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.6)", margin: 0, lineHeight: 1.45 }}>{a.desc}</p>
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                <span style={{ fontFamily: F, fontSize: 10, color: "#FFD166", background: "rgba(255,200,60,0.1)", padding: "2px 8px", borderRadius: 8 }}>⏱ {a.duration}</span>
+                {isOnSite && <span style={{ fontFamily: F, fontSize: 10, color: "#6BBF6B", background: "rgba(107,191,107,0.1)", padding: "2px 8px", borderRadius: 8 }}>🏠 Sur place</span>}
+                {isKid && <span style={{ fontFamily: F, fontSize: 10, color: "#69C0FF", background: "rgba(105,192,255,0.1)", padding: "2px 8px", borderRadius: 8 }}>🧒 Enfants</span>}
+                {a.distance && <span style={{ fontFamily: F, fontSize: 10, color: "rgba(255,255,255,0.4)", background: "rgba(255,255,255,0.05)", padding: "2px 8px", borderRadius: 8 }}>📍 {a.distance}</span>}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
