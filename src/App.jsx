@@ -143,20 +143,32 @@ function getFamilyEffectiveDates(familyId, roomAssignments) {
 }
 
 function computeShares(families, totalCost, roomAssignments) {
-  const withNights = families.map(f => {
+  const withDates = families.map(f => {
     const { checkIn, checkOut } = roomAssignments
       ? getFamilyEffectiveDates(f.id, roomAssignments)
       : { checkIn: f.checkIn || "2026-07-11", checkOut: f.checkOut || "2026-07-25" };
     return { ...f, checkIn, checkOut, nights: computeNights(checkIn, checkOut) };
   });
-  const totalNights = withNights.reduce((s, f) => s + f.nights, 0);
-  if (totalNights === 0 || families.length === 0) {
-    const eq = families.length > 0 ? Math.round(totalCost / families.length) : 0;
-    return withNights.map(f => ({ ...f, share: eq }));
-  }
+
+  if (families.length === 0) return withDates;
+
+  // Prix fixe par nuit (coût total / nb nuits du séjour)
+  const pricePerNight = totalCost / DATES.length;
+  const shares = {};
+  families.forEach(f => { shares[f.id] = 0; });
+
+  // Pour chaque nuit, on divise le coût entre les familles présentes ce soir-là
+  DATES.forEach(({ key }) => {
+    const present = withDates.filter(f => f.checkIn <= key && f.checkOut > key);
+    if (present.length === 0) return;
+    const costPerFamily = pricePerNight / present.length;
+    present.forEach(f => { shares[f.id] += costPerFamily; });
+  });
+
+  // Arrondi à l'euro, la dernière famille absorbe l'écart d'arrondi
   let remaining = totalCost;
-  return withNights.map((f, i) => {
-    const share = i === withNights.length - 1 ? remaining : Math.round((f.nights / totalNights) * totalCost);
+  return withDates.map((f, i) => {
+    const share = i === withDates.length - 1 ? remaining : Math.round(shares[f.id]);
     remaining -= share;
     return { ...f, share };
   });
