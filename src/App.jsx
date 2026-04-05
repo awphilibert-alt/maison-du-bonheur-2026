@@ -897,11 +897,40 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
   const [ed, setEd] = useState({});
   const [showAddFamily, setShowAddFamily] = useState(false);
   const [famForm, setFamForm] = useState(BLANK_FAM_FORM);
+  const [editingFamily, setEditingFamily] = useState(null);
+  const [editFamForm, setEditFamForm] = useState(null);
 
   const updateFamMember = (idx, field, val) => setFamForm(f => ({ ...f, members: f.members.map((m, i) => i === idx ? { ...m, [field]: val } : m) }));
   const addFamMember = () => setFamForm(f => ({ ...f, members: [...f.members, { ...BLANK_MEMBER }] }));
   const removeFamMember = (idx) => setFamForm(f => ({ ...f, members: f.members.filter((_, i) => i !== idx) }));
   const canCreateFam = famForm.name.trim() && famForm.members.some(m => m.name.trim());
+
+  const startEditFamily = (fam) => {
+    setEditingFamily(fam.id);
+    setEditFamForm({ name: fam.name, emoji: fam.emoji, color: fam.color, members: fam.members.map(m => ({ id: m.id, name: m.name, role: m.role, age: m.age || "" })) });
+  };
+  const updateEditFamMember = (idx, field, val) => setEditFamForm(f => ({ ...f, members: f.members.map((m, i) => i === idx ? { ...m, [field]: val } : m) }));
+  const addEditFamMember = () => setEditFamForm(f => ({ ...f, members: [...f.members, { ...BLANK_MEMBER }] }));
+  const removeEditFamMember = (idx) => setEditFamForm(f => ({ ...f, members: f.members.filter((_, i) => i !== idx) }));
+  const saveEditFamily = (famId) => {
+    if (!editFamForm.name.trim() || !editFamForm.members.some(m => m.name.trim())) return;
+    const next = families.map(f => {
+      if (f.id !== famId) return f;
+      const updatedMembers = editFamForm.members.filter(m => m.name.trim()).map((m, i) => {
+        const existing = f.members.find(em => em.id === m.id);
+        if (existing) return { ...existing, name: m.name.trim(), role: m.role, ...(m.role === "child" && m.age ? { age: Number(m.age) } : { age: undefined }) };
+        return { id: `${famId}-new-${Date.now()}-${i}`, name: m.name.trim(), role: m.role, ...(m.role === "child" && m.age ? { age: Number(m.age) } : {}), avatar: m.role === "adult" ? "👤" : "🧒", diet: "", activities: [], bio: "" };
+      });
+      return { ...f, name: editFamForm.name.trim(), emoji: editFamForm.emoji, color: editFamForm.color, members: updatedMembers };
+    });
+    setFamilies(next); saveData("bonheur-families", next);
+    setEditingFamily(null); setEditFamForm(null);
+  };
+  const deleteFamily = (famId) => {
+    if (!window.confirm("Supprimer cette famille définitivement ?")) return;
+    const next = families.filter(f => f.id !== famId);
+    setFamilies(next); saveData("bonheur-families", next);
+  };
 
   const createFamily = () => {
     if (!canCreateFam) return;
@@ -965,8 +994,57 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
           <div key={fam.id} style={{ background: "rgba(255,255,255,0.03)", borderRadius: 24, overflow: "hidden", border: `1px solid ${fam.color}33` }}>
             <div style={{ background: `linear-gradient(135deg, ${fam.color}25, ${fam.color}08)`, padding: "20px 24px", display: "flex", alignItems: "center", gap: 14, borderBottom: `1px solid ${fam.color}22` }}>
               <span style={{ fontSize: 40 }}>{fam.emoji}</span>
-              <div><h3 style={{ fontFamily: PF, fontSize: 22, fontWeight: 800, color: fam.color, margin: 0 }}>{fam.name}</h3><p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.65)", margin: "2px 0 0" }}>{(roomAssignments||[]).filter(ra=>ra.familyId===fam.id).map(ra=>ra.roomName).filter((v,i,a)=>a.indexOf(v)===i).join(", ")||"—"}</p></div>
+              <div style={{ flex: 1 }}><h3 style={{ fontFamily: PF, fontSize: 22, fontWeight: 800, color: fam.color, margin: 0 }}>{fam.name}</h3><p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.65)", margin: "2px 0 0" }}>{(roomAssignments||[]).filter(ra=>ra.familyId===fam.id).map(ra=>ra.roomName).filter((v,i,a)=>a.indexOf(v)===i).join(", ")||"—"}</p></div>
+              {editingFamily !== fam.id && (
+                <div style={{ display: "flex", gap: 6 }}>
+                  <button onClick={() => startEditFamily(fam)} style={{ padding: "6px 10px", borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 13 }}>✏️</button>
+                  <button onClick={() => deleteFamily(fam.id)} style={{ padding: "6px 10px", borderRadius: 10, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#EF4444", fontSize: 13 }}>🗑️</button>
+                </div>
+              )}
             </div>
+            {editingFamily === fam.id && editFamForm ? (
+              <div style={{ padding: 20 }}>
+                <div style={{ marginBottom: 12 }}>
+                  <label style={labelStyle}>Nom de la famille</label>
+                  <input value={editFamForm.name} onChange={e => setEditFamForm(d => ({ ...d, name: e.target.value }))} style={inputStyle} />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 14 }}>
+                  <div>
+                    <label style={labelStyle}>Emoji</label>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                      {FAMILY_EMOJIS.map(em => (<button key={em} onClick={() => setEditFamForm(d => ({ ...d, emoji: em }))} style={{ width: 34, height: 34, borderRadius: 9, border: editFamForm.emoji === em ? `2px solid ${fam.color}` : "2px solid transparent", cursor: "pointer", fontSize: 19, background: editFamForm.emoji === em ? `${fam.color}25` : "rgba(255,255,255,0.1)" }}>{em}</button>))}
+                    </div>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Couleur</label>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 7 }}>
+                      {FAMILY_COLORS.map(col => (<button key={col} onClick={() => setEditFamForm(d => ({ ...d, color: col }))} style={{ width: 28, height: 28, borderRadius: "50%", border: editFamForm.color === col ? "3px solid white" : "3px solid transparent", cursor: "pointer", background: col }} />))}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ marginBottom: 16 }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                    <label style={{ ...labelStyle, margin: 0 }}>Membres</label>
+                    <button onClick={addEditFamMember} style={{ padding: "4px 12px", borderRadius: 20, border: "none", cursor: "pointer", background: `${fam.color}22`, color: fam.color, fontFamily: F, fontSize: 12, fontWeight: 600 }}>+ Ajouter</button>
+                  </div>
+                  {editFamForm.members.map((m, idx) => (
+                    <div key={idx} style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: 8, alignItems: "center", marginBottom: 6 }}>
+                      <input value={m.name} onChange={e => updateEditFamMember(idx, "name", e.target.value)} placeholder="Prénom" style={{ ...inputStyle, padding: "8px 12px", fontSize: 12 }} />
+                      <select value={m.role} onChange={e => updateEditFamMember(idx, "role", e.target.value)} style={{ padding: "8px 10px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)", color: "white", fontSize: 12, fontFamily: F, cursor: "pointer", outline: "none" }}>
+                        <option value="adult">Adulte</option>
+                        <option value="child">Enfant</option>
+                      </select>
+                      {m.role === "child" ? <input type="number" value={m.age} onChange={e => updateEditFamMember(idx, "age", e.target.value)} placeholder="Âge" min="0" max="17" style={{ ...inputStyle, width: 60, padding: "8px 8px", fontSize: 12, textAlign: "center" }} /> : <div style={{ width: 60 }} />}
+                      {editFamForm.members.length > 1 ? <button onClick={() => removeEditFamMember(idx)} style={{ padding: "6px 9px", borderRadius: 8, border: "none", cursor: "pointer", background: "rgba(239,68,68,0.15)", color: "#EF4444", fontSize: 12 }}>✕</button> : <div style={{ width: 34 }} />}
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => saveEditFamily(fam.id)} style={{ padding: "10px 22px", borderRadius: 12, border: "none", cursor: "pointer", background: fam.color, color: "white", fontWeight: 700, fontSize: 13, fontFamily: F }}>💾 Sauvegarder</button>
+                  <button onClick={() => { setEditingFamily(null); setEditFamForm(null); }} style={{ padding: "10px 18px", borderRadius: 12, border: "none", cursor: "pointer", background: "rgba(255,255,255,0.1)", color: "rgba(255,255,255,0.7)", fontSize: 13, fontFamily: F }}>Annuler</button>
+                </div>
+              </div>
+            ) : (
             <div style={{ padding: "12px 24px 20px" }}>
               {fam.members.map((m, mi) => {
                 const isEd = editing === `${fam.id}:${m.id}`;
@@ -1015,6 +1093,7 @@ function ProfilesSection({ families, setFamilies, currentUser, setCurrentUser, r
                 );
               })}
             </div>
+            )}
           </div>
         ))}
       </div>
