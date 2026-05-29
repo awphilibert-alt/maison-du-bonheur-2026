@@ -330,6 +330,7 @@ function Nav({ active, setActive }) {
     { id: "expenses", icon: "💸", label: "Dépenses" },
     { id: "profiles", icon: "👥", label: "Profils" },
     { id: "rules", icon: "📜", label: "Règles d'or" },
+    { id: "pricing", icon: "⭐", label: "Abonnement" },
   ];
   return (
     <nav style={{ position: "sticky", top: 0, zIndex: 100, background: "rgba(15,20,30,0.92)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,0.13)", display: "flex", overflowX: "auto", fontFamily: F }}>
@@ -1707,6 +1708,137 @@ function BudgetSection({ families, totalCost, setTotalCost, roomAssignments }) {
   );
 }
 
+function PricingSection() {
+  const [annual, setAnnual] = useState(false);
+  const [loading, setLoading] = useState(null);
+
+  const handleCheckout = async (planId) => {
+    if (planId === "free") return;
+    setLoading(planId);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId, billing: annual ? "annual" : "monthly" }),
+      });
+      const data = await res.json();
+      if (data.url) window.location.href = data.url;
+      else alert("Erreur lors de la création du paiement.");
+    } catch {
+      alert("Erreur réseau. Réessaie.");
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const discount = 0.8;
+  const plans = [
+    {
+      id: "free", name: "Free", emoji: "🌱", color: "#6BBF6B",
+      price: 0, people: "4 personnes max", frequency: "Une seule fois",
+      features: ["1 événement", "Jusqu'à 4 participants", "Planning & budget de base"],
+      cta: "Commencer gratuitement", highlight: false,
+    },
+    {
+      id: "petit-kiff", name: "Petit Kiff", emoji: "✨", color: "#FFD166",
+      price: 12, people: "6 personnes max", frequency: "3 fois par an",
+      features: ["3 événements / an", "Jusqu'à 6 participants", "Planning, budget & courses", "Binômes cuisine", "14 jours d'essai gratuit"],
+      cta: "Essayer 14 jours gratuit", highlight: true, trial: true,
+    },
+    {
+      id: "gros-kiff", name: "Gros Kiff", emoji: "🚀", color: "#A78BFA",
+      price: 49, people: "Illimité", frequency: "Illimité",
+      features: ["Événements illimités", "Participants illimités", "Toutes les fonctionnalités", "Dépenses & remboursements", "Support prioritaire"],
+      cta: "Choisir Gros Kiff", highlight: false,
+    },
+  ];
+
+  return (
+    <div style={{ padding: "0 20px 60px", maxWidth: 960, margin: "0 auto" }}>
+      <SectionTitle icon="⭐" title="Abonnement" subtitle="Choisis la formule qui correspond à tes vacances" />
+
+      {/* Toggle mensuel / annuel */}
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 14, marginBottom: 36 }}>
+        <span style={{ fontFamily: F, fontSize: 14, fontWeight: annual ? 400 : 700, color: annual ? "rgba(255,255,255,0.5)" : "white" }}>Mensuel</span>
+        <button onClick={() => setAnnual(!annual)} style={{ position: "relative", width: 56, height: 30, borderRadius: 20, border: "none", cursor: "pointer", background: annual ? "linear-gradient(135deg, #FFD166, #FF8C42)" : "rgba(255,255,255,0.15)", transition: "background 0.3s", padding: 0 }}>
+          <div style={{ position: "absolute", top: 3, left: annual ? 29 : 3, width: 24, height: 24, borderRadius: "50%", background: "white", transition: "left 0.3s", boxShadow: "0 2px 6px rgba(0,0,0,0.3)" }} />
+        </button>
+        <span style={{ fontFamily: F, fontSize: 14, fontWeight: annual ? 700 : 400, color: annual ? "white" : "rgba(255,255,255,0.5)" }}>Annuel</span>
+        {annual && <span style={{ fontFamily: F, fontSize: 12, fontWeight: 700, color: "#FF8C42", background: "rgba(255,140,66,0.15)", padding: "4px 12px", borderRadius: 20 }}>-20%</span>}
+      </div>
+
+      {/* Cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(270px, 1fr))", gap: 20, alignItems: "start" }}>
+        {plans.map(p => {
+          const displayPrice = p.price === 0 ? 0 : annual ? Math.round(p.price * discount * 10) / 10 : p.price;
+          const isHighlight = p.highlight;
+          return (
+            <div key={p.id} style={{
+              position: "relative", padding: "32px 28px", borderRadius: 24,
+              background: isHighlight ? "linear-gradient(135deg, rgba(255,209,102,0.08), rgba(255,140,66,0.04))" : "rgba(255,255,255,0.03)",
+              border: isHighlight ? "2px solid rgba(255,209,102,0.35)" : "1px solid rgba(255,255,255,0.08)",
+              transform: isHighlight ? "scale(1.03)" : "none",
+            }}>
+              {isHighlight && (
+                <div style={{ position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)", background: "linear-gradient(135deg, #FFD166, #FF8C42)", color: "#0F141E", fontFamily: F, fontSize: 11, fontWeight: 800, padding: "5px 18px", borderRadius: 20, textTransform: "uppercase", letterSpacing: 1, whiteSpace: "nowrap" }}>Le plus populaire</div>
+              )}
+              {p.trial && (
+                <div style={{ position: "absolute", top: isHighlight ? 14 : -13, right: 16, background: "rgba(107,191,107,0.15)", border: "1px solid rgba(107,191,107,0.3)", color: "#6BBF6B", fontFamily: F, fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 12 }}>14 jours gratuit</div>
+              )}
+
+              <div style={{ textAlign: "center", marginBottom: 24, marginTop: isHighlight ? 8 : 0 }}>
+                <span style={{ fontSize: 40, display: "block", marginBottom: 8 }}>{p.emoji}</span>
+                <h3 style={{ fontFamily: PF, fontSize: 26, fontWeight: 800, color: p.color, margin: "0 0 4px" }}>{p.name}</h3>
+                <p style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.6)", margin: 0 }}>{p.people} · {p.frequency}</p>
+              </div>
+
+              <div style={{ textAlign: "center", marginBottom: 24 }}>
+                <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 4 }}>
+                  <span style={{ fontFamily: PF, fontSize: 48, fontWeight: 900, color: "white" }}>{displayPrice}€</span>
+                  {p.price > 0 && <span style={{ fontFamily: F, fontSize: 14, color: "rgba(255,255,255,0.5)" }}>/{annual ? "mois" : "mois"}</span>}
+                </div>
+                {annual && p.price > 0 && (
+                  <div style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 4 }}>
+                    <span style={{ textDecoration: "line-through", marginRight: 6 }}>{p.price * 12}€/an</span>
+                    <span style={{ color: "#FF8C42", fontWeight: 700 }}>{Math.round(displayPrice * 12 * 10) / 10}€/an</span>
+                  </div>
+                )}
+                {p.price === 0 && <div style={{ fontFamily: F, fontSize: 12, color: "rgba(255,255,255,0.5)", marginTop: 4 }}>Pour toujours</div>}
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
+                {p.features.map((feat, i) => (
+                  <div key={i} style={{ display: "flex", alignItems: "center", gap: 10, fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.85)" }}>
+                    <span style={{ color: p.color, fontSize: 14, flexShrink: 0 }}>✓</span>
+                    {feat}
+                  </div>
+                ))}
+              </div>
+
+              <button onClick={() => handleCheckout(p.id)} disabled={loading === p.id} style={{
+                width: "100%", padding: "14px 20px", borderRadius: 14, border: "none", cursor: loading === p.id ? "wait" : "pointer",
+                background: isHighlight ? "linear-gradient(135deg, #FFD166, #FF8C42)" : `${p.color}20`,
+                color: isHighlight ? "#0F141E" : p.color,
+                fontFamily: F, fontSize: 14, fontWeight: 700, transition: "opacity 0.2s",
+                opacity: loading === p.id ? 0.6 : 1,
+              }}>{loading === p.id ? "Redirection..." : p.cta}</button>
+
+              {p.trial && (
+                <p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.45)", textAlign: "center", marginTop: 10, marginBottom: 0 }}>Aucune carte bancaire requise</p>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      <div style={{ marginTop: 32, padding: "16px 20px", borderRadius: 16, background: "rgba(255,200,60,0.06)", border: "1px solid rgba(255,200,60,0.15)", fontFamily: F, fontSize: 13, color: "rgba(255,255,255,0.8)", textAlign: "center" }}>
+        💡 L'offre <strong style={{ color: "#FFD166" }}>Petit Kiff</strong> inclut un essai gratuit de 14 jours — sans engagement et sans carte bancaire.
+        {annual && <span> En facturation annuelle, tu économises <strong style={{ color: "#FF8C42" }}>20%</strong> sur toutes les formules payantes.</span>}
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [active, setActive] = useState("home");
   const [families, setFamilies] = useState(DEFAULT_FAMILIES);
@@ -1789,6 +1921,7 @@ export default function App() {
       {active === "expenses" && <ExpensesSection families={families} roomAssignments={roomAssignments} expenses={expenses} setExpenses={setExpenses} currentUser={currentUser} />}
       {active === "profiles" && <ProfilesSection families={families} setFamilies={setFamilies} currentUser={currentUser} setCurrentUser={setCurrentUser} roomAssignments={roomAssignments} />}
       {active === "rules" && <RulesSection />}
+      {active === "pricing" && <PricingSection />}
       <footer style={{ padding: "10px 20px", textAlign: "center", background: "#0A1628" }}>
         <p style={{ fontFamily: F, fontSize: 11, color: "rgba(255,255,255,0.35)", margin: 0 }}>2026© Fait par Aka, pour les meilleur·e·s potes du monde ❤️</p>
       </footer>
